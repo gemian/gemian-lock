@@ -17,7 +17,7 @@ Build-Depends: debhelper (>= 9),
                libxcb-xkb-dev,
                extra-cmake-modules
 Standards-Version: 3.9.7
-Homepage: https://github.com/gemian/gemian-lock.git
+Homepage: https://github.com/gemian/gemian-lock
 Vcs-Git: https://github.com/gemian/gemian-lock.git
 Vcs-Browser: https://github.com/gemian/gemian-lock
 
