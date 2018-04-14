@@ -8,40 +8,42 @@
  */
 #include <config.h>
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 #include <pwd.h>
 #include <sys/types.h>
-#include <string.h>
+#include <string>
 #include <unistd.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <cstdint>
 #include <xcb/xcb.h>
-#include <xcb/xkb.h>
 #include <err.h>
-#include <errno.h>
-#include <assert.h>
+#include <cerrno>
+#include <cassert>
+
 #ifdef __OpenBSD__
 #include <bsd_auth.h>
 #else
 #include <security/pam_appl.h>
 #endif
 #include <getopt.h>
-#include <string.h>
 #include <ev.h>
 #include <sys/mman.h>
 #include <xkbcommon/xkbcommon.h>
 #include <xkbcommon/xkbcommon-compose.h>
 #include <xkbcommon/xkbcommon-x11.h>
-#include <cairo.h>
 #include <cairo/cairo-xcb.h>
+
+#define explicit explicit_is_keyword_in_cpp
+#include <xcb/xkb.h>
+#undef explicit
+
 #ifdef __OpenBSD__
 #include <strings.h> /* explicit_bzero(3) */
 #endif
 #include <xcb/xcb_aux.h>
 #include <xcb/randr.h>
 
-#include "i3lock.h"
+#include "gemian-lock.h"
 #include "xcb.h"
 #include "cursors.h"
 #include "unlock_indicator.h"
@@ -70,7 +72,7 @@ static char password[512];
 static bool beep = false;
 bool debug_mode = false;
 bool unlock_indicator = true;
-char *modifier_string = NULL;
+std::string modifier_string;
 static bool dont_fork = false;
 struct ev_loop *main_loop;
 static struct ev_timer *clear_auth_wrong_timeout;
@@ -113,10 +115,10 @@ void u8_dec(char *s, int *i) {
  * translate keypresses to utf-8.
  *
  */
-static bool load_keymap(void) {
-    if (xkb_context == NULL) {
-        if ((xkb_context = xkb_context_new(0)) == NULL) {
-            fprintf(stderr, "[i3lock] could not create xkbcommon context\n");
+static bool load_keymap() {
+    if (xkb_context == nullptr) {
+        if ((xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS)) == NULL) {
+            fprintf(stderr, "[gemian-lock] could not create xkbcommon context\n");
             return false;
         }
     }
@@ -125,15 +127,15 @@ static bool load_keymap(void) {
 
     int32_t device_id = xkb_x11_get_core_keyboard_device_id(conn);
     DEBUG("device = %d\n", device_id);
-    if ((xkb_keymap = xkb_x11_keymap_new_from_device(xkb_context, conn, device_id, 0)) == NULL) {
-        fprintf(stderr, "[i3lock] xkb_x11_keymap_new_from_device failed\n");
+    if ((xkb_keymap = xkb_x11_keymap_new_from_device(xkb_context, conn, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS)) == NULL) {
+        fprintf(stderr, "[gemian-lock] xkb_x11_keymap_new_from_device failed\n");
         return false;
     }
 
     struct xkb_state *new_state =
         xkb_x11_state_new_from_device(xkb_keymap, conn, device_id);
     if (new_state == NULL) {
-        fprintf(stderr, "[i3lock] xkb_x11_state_new_from_device failed\n");
+        fprintf(stderr, "[gemian-lock] xkb_x11_state_new_from_device failed\n");
         return false;
     }
 
@@ -150,14 +152,14 @@ static bool load_keymap(void) {
 static bool load_compose_table(const char *locale) {
     xkb_compose_table_unref(xkb_compose_table);
 
-    if ((xkb_compose_table = xkb_compose_table_new_from_locale(xkb_context, locale, 0)) == NULL) {
-        fprintf(stderr, "[i3lock] xkb_compose_table_new_from_locale failed\n");
+    if ((xkb_compose_table = xkb_compose_table_new_from_locale(xkb_context, locale, XKB_COMPOSE_COMPILE_NO_FLAGS)) == NULL) {
+        fprintf(stderr, "[gemian-lock] xkb_compose_table_new_from_locale failed\n");
         return false;
     }
 
-    struct xkb_compose_state *new_compose_state = xkb_compose_state_new(xkb_compose_table, 0);
+    struct xkb_compose_state *new_compose_state = xkb_compose_state_new(xkb_compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
     if (new_compose_state == NULL) {
-        fprintf(stderr, "[i3lock] xkb_compose_state_new failed\n");
+        fprintf(stderr, "[gemian-lock] xkb_compose_state_new failed\n");
         return false;
     }
 
@@ -172,7 +174,7 @@ static bool load_compose_table(const char *locale) {
  * cold-boot attacks.
  *
  */
-static void clear_password_memory(void) {
+static void clear_password_memory() {
 #ifdef __OpenBSD__
     /* Use explicit_bzero(3) which was explicitly designed not to be
      * optimized out by the compiler. */
@@ -186,7 +188,7 @@ static void clear_password_memory(void) {
          * index plus (!) the value of the beep variable. This prevents the
          * compiler from optimizing the calls away, since the value of 'beep'
          * is not known at compile-time. */
-        vpassword[c] = c + (int)beep;
+        vpassword[c] = static_cast<volatile char>(c + (int)beep);
 #endif
 }
 
@@ -198,7 +200,7 @@ ev_timer *start_timer(ev_timer *timer_obj, ev_tstamp timeout, ev_callback_t call
     } else {
         /* When there is no memory, we just don’t have a timeout. We cannot
          * exit() here, since that would effectively unlock the screen. */
-        timer_obj = calloc(sizeof(struct ev_timer), 1);
+        timer_obj = static_cast<ev_timer *>(calloc(sizeof(struct ev_timer), 1));
         if (timer_obj) {
             ev_timer_init(timer_obj, callback, timeout, 0.);
             ev_timer_start(main_loop, timer_obj);
@@ -212,14 +214,14 @@ ev_timer *stop_timer(ev_timer *timer_obj) {
         ev_timer_stop(main_loop, timer_obj);
         free(timer_obj);
     }
-    return NULL;
+    return nullptr;
 }
 
 /*
  * Neccessary calls after ending input via enter or others
  *
  */
-static void finish_input(void) {
+static void finish_input() {
     password[input_position] = '\0';
     unlock_state = STATE_KEY_PRESSED;
     redraw_screen();
@@ -237,10 +239,7 @@ static void clear_auth_wrong(EV_P_ ev_timer *w, int revents) {
     redraw_screen();
 
     /* Clear modifier string. */
-    if (modifier_string != NULL) {
-        free(modifier_string);
-        modifier_string = NULL;
-    }
+    modifier_string.clear();
 
     /* Now free this timeout. */
     STOP_TIMER(clear_auth_wrong_timeout);
@@ -257,7 +256,7 @@ static void clear_indicator_cb(EV_P_ ev_timer *w, int revents) {
     STOP_TIMER(clear_indicator_timeout);
 }
 
-static void clear_input(void) {
+static void clear_input() {
     input_position = 0;
     clear_password_memory();
     password[input_position] = '\0';
@@ -268,7 +267,7 @@ static void discard_passwd_cb(EV_P_ ev_timer *w, int revents) {
     STOP_TIMER(discard_passwd_timeout);
 }
 
-static void input_done(void) {
+static void input_done() {
     STOP_TIMER(clear_auth_wrong_timeout);
     auth_state = STATE_AUTH_VERIFY;
     unlock_state = STATE_STARTED;
@@ -319,7 +318,7 @@ static void input_done(void) {
             continue;
 
         mod_name = xkb_keymap_mod_get_name(xkb_keymap, idx);
-        if (mod_name == NULL)
+        if (mod_name == nullptr)
             continue;
 
         /* Replace certain xkb names with nicer, human-readable ones. */
@@ -332,13 +331,10 @@ static void input_done(void) {
         else if (strcmp(mod_name, XKB_MOD_NAME_LOGO) == 0)
             mod_name = "Win";
 
-        char *tmp;
-        if (modifier_string == NULL) {
-            if (asprintf(&tmp, "%s", mod_name) != -1)
-                modifier_string = tmp;
-        } else if (asprintf(&tmp, "%s, %s", modifier_string, mod_name) != -1) {
-            free(modifier_string);
-            modifier_string = tmp;
+        if (modifier_string.length() == 0) {
+            modifier_string = mod_name;
+        } else {
+            modifier_string += std::string(", ")+mod_name;
         }
     }
 
@@ -369,7 +365,7 @@ static void redraw_timeout(EV_P_ ev_timer *w, int revents) {
     STOP_TIMER(w);
 }
 
-static bool skip_without_validation(void) {
+static bool skip_without_validation() {
     if (input_position != 0)
         return false;
 
@@ -393,7 +389,7 @@ static void handle_key_press(xcb_key_press_event_t *event) {
     bool composed = false;
 
     ksym = xkb_state_key_get_one_sym(xkb_state, event->detail);
-    ctrl = xkb_state_mod_name_is_active(xkb_state, XKB_MOD_NAME_CTRL, XKB_STATE_MODS_DEPRESSED);
+    ctrl = static_cast<bool>(xkb_state_mod_name_is_active(xkb_state, XKB_MOD_NAME_CTRL, XKB_STATE_MODS_DEPRESSED));
 
     /* The buffer will be null-terminated, so n >= 2 for 1 actual character. */
     memset(buffer, '\0', sizeof(buffer));
@@ -462,11 +458,17 @@ static void handle_key_press(xcb_key_press_event_t *event) {
 
         case XKB_KEY_Delete:
         case XKB_KEY_KP_Delete:
-            /* Deleting forward doesn’t make sense, as i3lock doesn’t allow you
+            /* Deleting forward doesn’t make sense, as gemian-lock doesn’t allow you
              * to move the cursor when entering a password. We need to eat this
              * key press so that it won’t be treated as part of the password,
              * see issue #50. */
             return;
+
+        case XKB_KEY_XF86Send:
+            //Gemini PDA external silver button
+            //Ultimately this should answer calls or launch voice assistant, for now we will just say the time
+            system("saytime -f %l%M");
+            break;
 
         case XKB_KEY_h:
         case XKB_KEY_BackSpace:
@@ -491,6 +493,8 @@ static void handle_key_press(xcb_key_press_event_t *event) {
             redraw_screen();
             unlock_state = STATE_KEY_PRESSED;
             return;
+        default:
+            break;
     }
 
     if ((input_position + 8) >= (int)sizeof(password))
@@ -531,7 +535,7 @@ static void handle_key_press(xcb_key_press_event_t *event) {
 /*
  * A visibility notify event will be received when the visibility (= can the
  * user view the complete window) changes, so for example when a popup overlays
- * some area of the i3lock window.
+ * some area of the gemian-lock window.
  *
  * In this case, we raise our window on top so that the popup (or whatever is
  * hiding us) gets hidden.
@@ -550,7 +554,7 @@ static void handle_visibility_notify(xcb_connection_t *conn,
  * Called when the keyboard mapping changes. We update our symbols.
  *
  * We ignore errors — if the new keymap cannot be loaded it’s better if the
- * screen stays locked and the user intervenes by using killall i3lock.
+ * screen stays locked and the user intervenes by using killall gemian-lock.
  *
  */
 static void process_xkb_event(xcb_generic_event_t *gevent) {
@@ -592,9 +596,12 @@ static void process_xkb_event(xcb_generic_event_t *gevent) {
                                   event->state_notify.baseMods,
                                   event->state_notify.latchedMods,
                                   event->state_notify.lockedMods,
-                                  event->state_notify.baseGroup,
-                                  event->state_notify.latchedGroup,
+                                  static_cast<xkb_layout_index_t>(event->state_notify.baseGroup),
+                                  static_cast<xkb_layout_index_t>(event->state_notify.latchedGroup),
                                   event->state_notify.lockedGroup);
+            break;
+
+        default:
             break;
     }
 }
@@ -657,7 +664,7 @@ static bool verify_png_image(const char *image_path) {
     // https://www.w3.org/TR/2003/REC-PNG-20031110/#5PNG-file-signature
     static unsigned char PNG_REFERENCE_HEADER[8] = { 137, 80, 78, 71, 13, 10, 26, 10 };
     if (memcmp(PNG_REFERENCE_HEADER, png_header, sizeof(png_header)) != 0) {
-        fprintf(stderr, "File \"%s\" does not start with a PNG header. i3lock currently only supports loading PNG files.\n", image_path);
+        fprintf(stderr, "File \"%s\" does not start with a PNG header. gemian-lock currently only supports loading PNG files.\n", image_path);
         return false;
     }
     return true;
@@ -674,7 +681,7 @@ static int conv_callback(int num_msg, const struct pam_message **msg,
         return 1;
 
     /* PAM expects an array of responses, one for each message */
-    if ((*resp = calloc(num_msg, sizeof(struct pam_response))) == NULL) {
+    if ((*resp = static_cast<pam_response *>(calloc(num_msg, sizeof(struct pam_response)))) == nullptr) {
         perror("calloc");
         return 1;
     }
@@ -686,7 +693,7 @@ static int conv_callback(int num_msg, const struct pam_message **msg,
 
         /* return code is currently not used but should be set to zero */
         resp[c]->resp_retcode = 0;
-        if ((resp[c]->resp = strdup(password)) == NULL) {
+        if ((resp[c]->resp = strdup(password)) == nullptr) {
             perror("strdup");
             return 1;
         }
@@ -797,8 +804,8 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
 }
 
 /*
- * This function is called from a fork()ed child and will raise the i3lock
- * window when the window is obscured, even when the main i3lock process is
+ * This function is called from a fork()ed child and will raise the gemian-lock
+ * window when the window is obscured, even when the main gemian-lock process is
  * blocked due to the authentication backend.
  *
  */
@@ -807,20 +814,19 @@ static void raise_loop(xcb_window_t window) {
     xcb_generic_event_t *event;
     int screens;
 
-    if (xcb_connection_has_error((conn = xcb_connect(NULL, &screens))) > 0)
+    if (xcb_connection_has_error((conn = xcb_connect(nullptr, &screens))) > 0)
         errx(EXIT_FAILURE, "Cannot open display\n");
 
     /* We need to know about the window being obscured or getting destroyed. */
-    xcb_change_window_attributes(conn, window, XCB_CW_EVENT_MASK,
-                                 (uint32_t[]){
-                                     XCB_EVENT_MASK_VISIBILITY_CHANGE |
-                                     XCB_EVENT_MASK_STRUCTURE_NOTIFY});
+    uint32_t values_list[1];
+    values_list[0] = XCB_EVENT_MASK_VISIBILITY_CHANGE | XCB_EVENT_MASK_STRUCTURE_NOTIFY;
+    xcb_change_window_attributes(conn, window, XCB_CW_EVENT_MASK, values_list);
     xcb_flush(conn);
 
     DEBUG("Watching window 0x%08x\n", window);
-    while ((event = xcb_wait_for_event(conn)) != NULL) {
+    while ((event = xcb_wait_for_event(conn)) != nullptr) {
         if (event->response_type == 0) {
-            xcb_generic_error_t *error = (xcb_generic_error_t *)event;
+            auto error = (xcb_generic_error_t *)event;
             DEBUG("X11 Error received! sequence 0x%x, error_code = %d\n",
                   error->sequence, error->error_code);
             free(event);
@@ -854,54 +860,45 @@ static void raise_loop(xcb_window_t window) {
 int main(int argc, char *argv[]) {
     struct passwd *pw;
     char *username;
-    char *image_path = NULL;
+    char *image_path = nullptr;
 #ifndef __OpenBSD__
     int ret;
-    struct pam_conv conv = {conv_callback, NULL};
+    struct pam_conv conv = {conv_callback, nullptr};
 #endif
     int curs_choice = CURS_NONE;
     int o;
     int longoptind = 0;
     struct option longopts[] = {
-        {"version", no_argument, NULL, 'v'},
-        {"nofork", no_argument, NULL, 'n'},
-        {"beep", no_argument, NULL, 'b'},
-        {"dpms", no_argument, NULL, 'd'},
-        {"color", required_argument, NULL, 'c'},
-        {"pointer", required_argument, NULL, 'p'},
-        {"debug", no_argument, NULL, 0},
-        {"help", no_argument, NULL, 'h'},
-        {"no-unlock-indicator", no_argument, NULL, 'u'},
-        {"image", required_argument, NULL, 'i'},
-        {"tiling", no_argument, NULL, 't'},
-        {"ignore-empty-password", no_argument, NULL, 'e'},
-        {"inactivity-timeout", required_argument, NULL, 'I'},
-        {"show-failed-attempts", no_argument, NULL, 'f'},
-        {NULL, no_argument, NULL, 0}};
+        {"version", no_argument, nullptr, 'v'},
+        {"nofork", no_argument, nullptr, 'n'},
+        {"beep", no_argument, nullptr, 'b'},
+        {"color", required_argument, nullptr, 'c'},
+        {"pointer", required_argument, nullptr, 'p'},
+        {"debug", no_argument, nullptr, 0},
+        {"help", no_argument, nullptr, 'h'},
+        {"no-unlock-indicator", no_argument, nullptr, 'u'},
+        {"image", required_argument, nullptr, 'i'},
+        {"tiling", no_argument, nullptr, 't'},
+        {"ignore-empty-password", no_argument, nullptr, 'e'},
+        {"show-failed-attempts", no_argument, nullptr, 'f'},
+        {nullptr, no_argument, nullptr, 0}};
 
-    if ((pw = getpwuid(getuid())) == NULL)
+    if ((pw = getpwuid(getuid())) == nullptr)
         err(EXIT_FAILURE, "getpwuid() failed");
-    if ((username = pw->pw_name) == NULL)
+    if ((username = pw->pw_name) == nullptr)
         errx(EXIT_FAILURE, "pw->pw_name is NULL.\n");
 
-    char *optstring = "hvnbdc:p:ui:teI:f";
+    const char *optstring = "hvnbdc:p:ui:teI:f";
     while ((o = getopt_long(argc, argv, optstring, longopts, &longoptind)) != -1) {
         switch (o) {
             case 'v':
-                errx(EXIT_SUCCESS, "version " I3LOCK_VERSION " © 2010 Michael Stapelberg");
+                errx(EXIT_SUCCESS, "version " GEMIAN_LOCK_VERSION " © 2010 Michael Stapelberg");
             case 'n':
                 dont_fork = true;
                 break;
             case 'b':
                 beep = true;
                 break;
-            case 'd':
-                fprintf(stderr, "DPMS support has been removed from i3lock. Please see the manpage i3lock(1).\n");
-                break;
-            case 'I': {
-                fprintf(stderr, "Inactivity timeout only makes sense with DPMS, which was removed. Please see the manpage i3lock(1).\n");
-                break;
-            }
             case 'c': {
                 char *arg = optarg;
 
@@ -929,7 +926,7 @@ int main(int argc, char *argv[]) {
                 } else if (!strcmp(optarg, "default")) {
                     curs_choice = CURS_DEFAULT;
                 } else {
-                    errx(EXIT_FAILURE, "i3lock: Invalid pointer type given. Expected one of \"win\" or \"default\".\n");
+                    errx(EXIT_FAILURE, "gemian-lock: Invalid pointer type given. Expected one of \"win\" or \"default\".\n");
                 }
                 break;
             case 'e':
@@ -943,18 +940,18 @@ int main(int argc, char *argv[]) {
                 show_failed_attempts = true;
                 break;
             default:
-                errx(EXIT_FAILURE, "Syntax: i3lock [-v] [-n] [-b] [-d] [-c color] [-u] [-p win|default]"
+                errx(EXIT_FAILURE, "Syntax: gemian-lock [-v] [-n] [-b] [-d] [-c color] [-u] [-p win|default]"
                                    " [-i image.png] [-t] [-e] [-I timeout] [-f]");
         }
     }
 
     /* We need (relatively) random numbers for highlighting a random part of
      * the unlock indicator upon keypresses. */
-    srand(time(NULL));
+    srand(static_cast<unsigned int>(time(nullptr)));
 
 #ifndef __OpenBSD__
     /* Initialize PAM */
-    if ((ret = pam_start("i3lock", username, &conv, &pam_handle)) != PAM_SUCCESS)
+    if ((ret = pam_start("gemian-lock", username, &conv, &pam_handle)) != PAM_SUCCESS)
         errx(EXIT_FAILURE, "PAM: %s", pam_strerror(pam_handle, ret));
 
     if ((ret = pam_set_item(pam_handle, PAM_TTY, getenv("DISPLAY"))) != PAM_SUCCESS)
@@ -963,7 +960,7 @@ int main(int argc, char *argv[]) {
 
 /* Using mlock() as non-super-user seems only possible in Linux.
  * Users of other operating systems should use encrypted swap/no swap
- * (or remove the ifdef and run i3lock as super-user).
+ * (or remove the ifdef and run gemian-lock as super-user).
  * Alas, swap is encrypted by default on OpenBSD so swapping out
  * is not necessarily an issue. */
 #if defined(__linux__)
@@ -976,43 +973,44 @@ int main(int argc, char *argv[]) {
 
     /* Double checking that connection is good and operatable with xcb */
     int screennr;
-    if ((conn = xcb_connect(NULL, &screennr)) == NULL ||
-        xcb_connection_has_error(conn))
+    if ((conn = xcb_connect(nullptr, &screennr)) == nullptr || xcb_connection_has_error(conn)) {
         errx(EXIT_FAILURE, "Could not connect to X11, maybe you need to set DISPLAY?");
+    }
 
     if (xkb_x11_setup_xkb_extension(conn,
                                     XKB_X11_MIN_MAJOR_XKB_VERSION,
                                     XKB_X11_MIN_MINOR_XKB_VERSION,
-                                    0,
-                                    NULL,
-                                    NULL,
+                                    XKB_X11_SETUP_XKB_EXTENSION_NO_FLAGS,
+                                    nullptr,
+                                    nullptr,
                                     &xkb_base_event,
-                                    &xkb_base_error) != 1)
+                                    &xkb_base_error) != 1) {
         errx(EXIT_FAILURE, "Could not setup XKB extension.");
+    }
 
-    static const xcb_xkb_map_part_t required_map_parts =
-        (XCB_XKB_MAP_PART_KEY_TYPES |
-         XCB_XKB_MAP_PART_KEY_SYMS |
-         XCB_XKB_MAP_PART_MODIFIER_MAP |
-         XCB_XKB_MAP_PART_EXPLICIT_COMPONENTS |
-         XCB_XKB_MAP_PART_KEY_ACTIONS |
-         XCB_XKB_MAP_PART_VIRTUAL_MODS |
-         XCB_XKB_MAP_PART_VIRTUAL_MOD_MAP);
+    static const auto required_map_parts = static_cast<xcb_xkb_map_part_t>(
+            XCB_XKB_MAP_PART_KEY_TYPES |
+            XCB_XKB_MAP_PART_KEY_SYMS |
+            XCB_XKB_MAP_PART_MODIFIER_MAP |
+            XCB_XKB_MAP_PART_EXPLICIT_COMPONENTS |
+            XCB_XKB_MAP_PART_KEY_ACTIONS |
+            XCB_XKB_MAP_PART_VIRTUAL_MODS |
+            XCB_XKB_MAP_PART_VIRTUAL_MOD_MAP);
 
-    static const xcb_xkb_event_type_t required_events =
-        (XCB_XKB_EVENT_TYPE_NEW_KEYBOARD_NOTIFY |
-         XCB_XKB_EVENT_TYPE_MAP_NOTIFY |
-         XCB_XKB_EVENT_TYPE_STATE_NOTIFY);
+    static const auto required_events = static_cast<xcb_xkb_event_type_t>(
+            XCB_XKB_EVENT_TYPE_NEW_KEYBOARD_NOTIFY |
+            XCB_XKB_EVENT_TYPE_MAP_NOTIFY |
+            XCB_XKB_EVENT_TYPE_STATE_NOTIFY);
 
     xcb_xkb_select_events(
         conn,
-        xkb_x11_get_core_keyboard_device_id(conn),
+        static_cast<xcb_xkb_device_spec_t>(xkb_x11_get_core_keyboard_device_id(conn)),
         required_events,
         0,
         required_events,
         required_map_parts,
         required_map_parts,
-        0);
+        nullptr);
 
     /* When we cannot initially load the keymap, we better exit */
     if (!load_keymap())
@@ -1039,8 +1037,8 @@ int main(int argc, char *argv[]) {
     last_resolution[0] = screen->width_in_pixels;
     last_resolution[1] = screen->height_in_pixels;
 
-    xcb_change_window_attributes(conn, screen->root, XCB_CW_EVENT_MASK,
-                                 (uint32_t[]){XCB_EVENT_MASK_STRUCTURE_NOTIFY});
+    uint32_t values_list[] = {XCB_EVENT_MASK_STRUCTURE_NOTIFY};
+    xcb_change_window_attributes(conn, screen->root, XCB_CW_EVENT_MASK, values_list);
 
     if (verify_png_image(image_path)) {
         /* Create a pixmap to render on, fill it with the background color */
@@ -1049,7 +1047,7 @@ int main(int argc, char *argv[]) {
         if (cairo_surface_status(img) != CAIRO_STATUS_SUCCESS) {
             fprintf(stderr, "Could not load image \"%s\": %s\n",
                     image_path, cairo_status_to_string(cairo_surface_status(img)));
-            img = NULL;
+            img = nullptr;
         }
     }
     free(image_path);
@@ -1070,15 +1068,15 @@ int main(int argc, char *argv[]) {
     if (!grab_pointer_and_keyboard(conn, screen, cursor, 1000)) {
         DEBUG("stole focus from X11 window 0x%08x\n", stolen_focus);
 
-        /* Set the focus to i3lock, possibly closing context menus which would
+        /* Set the focus to gemian-lock, possibly closing context menus which would
          * otherwise prevent us from grabbing keyboard/pointer.
          *
          * We cannot use set_focused_window because _NET_ACTIVE_WINDOW only
-         * works for managed windows, but i3lock uses an unmanaged window
+         * works for managed windows, but gemian-lock uses an unmanaged window
          * (override_redirect=1). */
         xcb_set_input_focus(conn, XCB_INPUT_FOCUS_PARENT /* revert_to */, win, XCB_CURRENT_TIME);
         if (!grab_pointer_and_keyboard(conn, screen, cursor, 9000)) {
-            auth_state = STATE_I3LOCK_LOCK_FAILED;
+            auth_state = STATE_GEMIANLOCK_LOCK_FAILED;
             redraw_screen();
             sleep(1);
             errx(EXIT_FAILURE, "Cannot grab pointer/keyboard");
@@ -1088,7 +1086,7 @@ int main(int argc, char *argv[]) {
     pid_t pid = fork();
     /* The pid == -1 case is intentionally ignored here:
      * While the child process is useful for preventing other windows from
-     * popping up while i3lock blocks, it is not critical. */
+     * popping up while gemian-lock blocks, it is not critical. */
     if (pid == 0) {
         /* Child */
         close(xcb_get_file_descriptor(conn));
@@ -1105,16 +1103,17 @@ int main(int argc, char *argv[]) {
 
     /* Initialize the libev event loop. */
     main_loop = EV_DEFAULT;
-    if (main_loop == NULL)
+    if (main_loop == nullptr) {
         errx(EXIT_FAILURE, "Could not initialize libev. Bad LIBEV_FLAGS?\n");
+    }
 
     /* Explicitly call the screen redraw in case "locking…" message was displayed */
     auth_state = STATE_AUTH_IDLE;
     redraw_screen();
 
-    struct ev_io *xcb_watcher = calloc(sizeof(struct ev_io), 1);
-    struct ev_check *xcb_check = calloc(sizeof(struct ev_check), 1);
-    struct ev_prepare *xcb_prepare = calloc(sizeof(struct ev_prepare), 1);
+    auto *xcb_watcher = static_cast<ev_io *>(calloc(sizeof(struct ev_io), 1));
+    auto *xcb_check = static_cast<ev_check *>(calloc(sizeof(struct ev_check), 1));
+    auto *xcb_prepare = static_cast<ev_prepare *>(calloc(sizeof(struct ev_prepare), 1));
 
     ev_io_init(xcb_watcher, xcb_got_event, xcb_get_file_descriptor(conn), EV_READ);
     ev_io_start(main_loop, xcb_watcher);
@@ -1132,6 +1131,7 @@ int main(int argc, char *argv[]) {
     ev_loop(main_loop, 0);
 
     if (stolen_focus == XCB_NONE) {
+        DEBUG("stole focus fail 0x%08x\n", stolen_focus);
         return 0;
     }
 

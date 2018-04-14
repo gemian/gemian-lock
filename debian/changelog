@@ -1,0 +1,129 @@
+gemian-lock (2.10-gemian) unstable; urgency=medium
+
+  * Branched for gemian
+  
+ -- Adam Boardman <adamboardman@gmail.com>  Sat, 14 Apr 2018 13:24:16 +0000
+
+i3lock (2.8-1) unstable; urgency=medium
+
+  * New upstream version
+  * Switch to secure VCS URLs
+  * Bump standards-version to 3.9.7 (no changes necessary)
+  * debian/copyright: don’t define the same license twice
+
+ -- Michael Stapelberg <stapelberg@debian.org>  Sat, 04 Jun 2016 19:34:16 +0200
+
+i3lock (2.7-1) unstable; urgency=medium
+
+  * New upstream version
+  * Bump standards-version to 3.9.6 (no changes necessary)
+  * debian/copyright: clarify that the license is BSD-3-clause
+  * debian/copyright: get rid of ranges in copyright years
+
+ -- Michael Stapelberg <stapelberg@debian.org>  Wed, 20 May 2015 09:19:50 +0200
+
+i3lock (2.6-1) unstable; urgency=low
+
+  * New upstream version
+  * Bump standards-version to 3.9.5 (no changes necessary)
+  * add debian/upstream-signing-key.pgp
+
+ -- Michael Stapelberg <stapelberg@debian.org>  Fri, 18 Jul 2014 20:26:32 +0200
+
+i3lock (2.5-1) unstable; urgency=low
+
+  * New upstream version
+  * Bump standards-version to 3.9.4 (no changes necessary)
+
+ -- Michael Stapelberg <stapelberg@debian.org>  Sun, 09 Jun 2013 11:35:05 +0200
+
+i3lock (2.4.1-1) unstable; urgency=low
+
+  * New upstream version
+
+ -- Michael Stapelberg <stapelberg@debian.org>  Sat, 02 Jun 2012 14:48:29 +0200
+
+i3lock (2.4-1) unstable; urgency=low
+
+  * New upstream version (Closes: #664285, #664288)
+  * Email change: Michael Stapelberg -> stapelberg@debian.org
+  * Convert debian/copyright to machine-readable format
+  * Convert to 3.0 (quilt)
+  * Add debian/watch file
+  * Move packaging to alioth
+
+ -- Michael Stapelberg <stapelberg@debian.org>  Sun, 01 Apr 2012 13:31:20 +0200
+
+i3lock (2.3.1-1) unstable; urgency=low
+
+  * Fix compilation on some systems
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Thu, 15 Mar 2012 17:01:54 +0100
+
+i3lock (2.3-1) unstable; urgency=low
+
+  * Implement a visual unlock indicator
+  * Support ISO_Level5_Shift and Caps Lock
+  * Lock the password buffer in memory, clear it in RAM after verifying
+  * Fork after the window is visible, not before
+  * Bugfix: Copy the color depth from parent (root) window instead of
+    hardcoding a depth of 24
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Thu, 15 Mar 2012 13:25:23 +0100
+
+i3lock (2.2-1) unstable; urgency=low
+
+  * Don’t re-grab pointer/keyboard on MappingNotify. In some rare situations,
+    this lead to some keypresses "slipping through" to the last focused window.
+  * Correctly handle Mode_switch/ISO_Level3_Shift
+  * Render to a pixmap which is used as background for the window instead of
+    copying contents on every expose event
+  * Handle screen resolution changes while screen is locked
+  * Manpage: document arguments for every option
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Sun, 06 Nov 2011 14:02:35 +0000
+
+i3lock (2.1-1) unstable; urgency=low
+
+  * Accept return/backspace when the buffer of 512 bytes is full
+  * Handle numpad keys correctly (Closes: #602101)
+  * Handle MappingNotify events (Closes: #602242)
+  * Correctly check for errors when connecting to X11
+  * Add i3lock.pam to not rely on debian’s /etc/pam.d/other anymore
+  * don’t display debug output
+  * add NOLIBCAIRO flag to permit compilation without cairo
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Sun, 13 Mar 2011 20:27:46 +0100
+
+i3lock (2.0-2) unstable; urgency=low
+
+  * change priority to optional
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Sun, 05 Sep 2010 18:19:15 +0200
+
+i3lock (2.0-1) unstable; urgency=low
+
+  * Complete rewrite of i3lock. Now using xcb instead of Xlib.
+  * When a window obscures i3lock, it pushes itself back to the top again.
+  * Display version when starting with -v
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Sun, 05 Sep 2010 11:34:19 +0200
+
+i3lock (1.1-1) unstable; urgency=low
+
+  * Implement background pictures (-i) and colors (-c)
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Sun, 02 Aug 2009 19:58:23 +0200
+
+i3lock (1.0-1) unstable; urgency=low
+
+  * Implement PAM support
+  * Implement options for forking, beeping, DPMS
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Sun, 10 May 2009 12:54:05 +0200
+
+i3lock (0.9-1) unstable; urgency=low
+
+  * First release, forked from slock 0.9 (Closes: #521707)
+
+ -- Michael Stapelberg <michael@stapelberg.de>  Fri, 01 May 2009 20:29:43 +0200

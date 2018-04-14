@@ -6,17 +6,16 @@
  * See LICENSE for licensing information
  *
  */
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
+
+#include <cstdlib>
+#include <cstdio>
+#include <string>
+#include <cmath>
 #include <xcb/xcb.h>
 #include <ev.h>
-#include <cairo.h>
 #include <cairo/cairo-xcb.h>
 
-#include "i3lock.h"
+#include "gemian-lock.h"
 #include "xcb.h"
 #include "unlock_indicator.h"
 #include "randr.h"
@@ -27,14 +26,14 @@
 #define BUTTON_DIAMETER (2 * BUTTON_SPACE)
 
 /*******************************************************************************
- * Variables defined in i3lock.c.
+ * Variables defined in gemian-lock.c.
  ******************************************************************************/
 
 extern bool debug_mode;
 
 /* The current position in the input buffer. Useful to determine if any
  * characters of the password have already been entered or not. */
-int input_position;
+extern int input_position;
 
 /* The lock window. */
 extern xcb_window_t win;
@@ -46,7 +45,7 @@ extern uint32_t last_resolution[2];
 extern bool unlock_indicator;
 
 /* List of pressed modifiers, or NULL if none are pressed. */
-extern char *modifier_string;
+extern std::string modifier_string;
 
 /* A Cairo surface containing the specified image (-i), if any. */
 extern cairo_surface_t *img;
@@ -85,9 +84,9 @@ auth_state_t auth_state;
  * Pro 13" Retina screen, the scaling factor is 227/96 = 2.36.
  *
  */
-static double scaling_factor(void) {
-    const int dpi = (double)screen->height_in_pixels * 25.4 /
-                    (double)screen->height_in_millimeters;
+static double scaling_factor() {
+    const auto dpi = static_cast<const int>((double)screen->height_in_pixels * 25.4 /
+                                           (double)screen->height_in_millimeters);
     return (dpi / 96.0);
 }
 
@@ -98,7 +97,7 @@ static double scaling_factor(void) {
  */
 xcb_pixmap_t draw_image(uint32_t *resolution) {
     xcb_pixmap_t bg_pixmap = XCB_NONE;
-    int button_diameter_physical = ceil(scaling_factor() * BUTTON_DIAMETER);
+    auto button_diameter_physical = static_cast<int>(ceil(scaling_factor() * BUTTON_DIAMETER));
     DEBUG("scaling_factor is %.f, physical diameter is %d px\n",
           scaling_factor(), button_diameter_physical);
 
@@ -132,9 +131,9 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         char strgroups[3][3] = {{color[0], color[1], '\0'},
                                 {color[2], color[3], '\0'},
                                 {color[4], color[5], '\0'}};
-        uint32_t rgb16[3] = {(strtol(strgroups[0], NULL, 16)),
-                             (strtol(strgroups[1], NULL, 16)),
-                             (strtol(strgroups[2], NULL, 16))};
+        uint32_t rgb16[3] = {static_cast<uint32_t>(strtol(strgroups[0], NULL, 16)),
+                             static_cast<uint32_t>(strtol(strgroups[1], NULL, 16)),
+                             static_cast<uint32_t>(strtol(strgroups[2], NULL, 16))};
         cairo_set_source_rgb(xcb_ctx, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0);
         cairo_rectangle(xcb_ctx, 0, 0, resolution[0], resolution[1]);
         cairo_fill(xcb_ctx);
@@ -160,7 +159,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 cairo_set_source_rgba(ctx, 0, 114.0 / 255, 255.0 / 255, 0.75);
                 break;
             case STATE_AUTH_WRONG:
-            case STATE_I3LOCK_LOCK_FAILED:
+            case STATE_GEMIANLOCK_LOCK_FAILED:
                 cairo_set_source_rgba(ctx, 250.0 / 255, 0, 0, 0.75);
                 break;
             default:
@@ -179,7 +178,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
                 cairo_set_source_rgb(ctx, 51.0 / 255, 0, 250.0 / 255);
                 break;
             case STATE_AUTH_WRONG:
-            case STATE_I3LOCK_LOCK_FAILED:
+            case STATE_GEMIANLOCK_LOCK_FAILED:
                 cairo_set_source_rgb(ctx, 125.0 / 255, 51.0 / 255, 0);
                 break;
             case STATE_AUTH_IDLE:
@@ -207,7 +206,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         cairo_set_line_width(ctx, 10.0);
 
         /* Display a (centered) text of the current PAM state. */
-        char *text = NULL;
+        const char *text = nullptr;
         /* We don't want to show more than a 3-digit number. */
         char buf[4];
 
@@ -224,7 +223,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             case STATE_AUTH_WRONG:
                 text = "wrong!";
                 break;
-            case STATE_I3LOCK_LOCK_FAILED:
+            case STATE_GEMIANLOCK_LOCK_FAILED:
                 text = "lock failed!";
                 break;
             default:
@@ -257,18 +256,18 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
             cairo_close_path(ctx);
         }
 
-        if (auth_state == STATE_AUTH_WRONG && (modifier_string != NULL)) {
+        if (auth_state == STATE_AUTH_WRONG && (modifier_string.length() > 0)) {
             cairo_text_extents_t extents;
             double x, y;
 
             cairo_set_font_size(ctx, 14.0);
 
-            cairo_text_extents(ctx, modifier_string, &extents);
+            cairo_text_extents(ctx, modifier_string.c_str(), &extents);
             x = BUTTON_CENTER - ((extents.width / 2) + extents.x_bearing);
             y = BUTTON_CENTER - ((extents.height / 2) + extents.y_bearing) + 28.0;
 
             cairo_move_to(ctx, x, y);
-            cairo_show_text(ctx, modifier_string);
+            cairo_show_text(ctx, modifier_string.c_str());
             cairo_close_path(ctx);
         }
 
@@ -348,7 +347,8 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
 void redraw_screen(void) {
     DEBUG("redraw_screen(unlock_state = %d, auth_state = %d)\n", unlock_state, auth_state);
     xcb_pixmap_t bg_pixmap = draw_image(last_resolution);
-    xcb_change_window_attributes(conn, win, XCB_CW_BACK_PIXMAP, (uint32_t[1]){bg_pixmap});
+    uint32_t value_list[] ={bg_pixmap};
+    xcb_change_window_attributes(conn, win, XCB_CW_BACK_PIXMAP, value_list);
     /* XXX: Possible optimization: Only update the area in the middle of the
      * screen instead of the whole screen. */
     xcb_clear_area(conn, 0, win, 0, 0, last_resolution[0], last_resolution[1]);

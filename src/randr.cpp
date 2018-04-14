@@ -6,15 +6,15 @@
  * See LICENSE for licensing information
  *
  */
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
+
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
 #include <xcb/xcb.h>
 #include <xcb/xinerama.h>
 #include <xcb/randr.h>
 
-#include "i3lock.h"
+#include "gemian-lock.h"
 #include "xcb.h"
 #include "randr.h"
 
@@ -122,7 +122,7 @@ static bool _randr_query_monitors_15(xcb_window_t root) {
     DEBUG("%d RandR monitors found (timestamp %d)\n",
           screens, monitors->timestamp);
 
-    Rect *resolutions = malloc(screens * sizeof(Rect));
+    auto resolutions = static_cast<Rect *>(malloc(screens * sizeof(Rect)));
     /* No memory? Just keep on using the old information. */
     if (!resolutions) {
         free(monitors);
@@ -188,7 +188,7 @@ static bool _randr_query_outputs_14(xcb_window_t root) {
     for (int i = 0; i < len; i++) {
         ocookie[i] = xcb_randr_get_output_info(conn, randr_outputs[i], cts);
     }
-    Rect *resolutions = malloc(len * sizeof(Rect));
+    auto resolutions = static_cast<Rect *>(malloc(len * sizeof(Rect)));
     /* No memory? Just keep on using the old information. */
     if (!resolutions) {
         free(res);
@@ -260,7 +260,7 @@ void _xinerama_query_screens(void) {
     screen_info = xcb_xinerama_query_screens_screen_info(reply);
     int screens = xcb_xinerama_query_screens_screen_info_length(reply);
 
-    Rect *resolutions = malloc(screens * sizeof(Rect));
+    auto resolutions = static_cast<Rect *>(malloc(screens * sizeof(Rect)));
     /* No memory? Just keep on using the old information. */
     if (!resolutions) {
         free(reply);

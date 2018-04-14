@@ -1,0 +1,6 @@
+#ifndef __CONFIG_H__
+#define __CONFIG_H__
+
+#define GEMIAN_LOCK_VERSION           "@GEMIAN_LOCK_VERSION@"
+
+#endif

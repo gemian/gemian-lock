@@ -8,13 +8,13 @@
 .fi
 ..
 
-.TH i3lock 1 "JANUARY 2012" Linux "User Manuals"
+.TH gemian-lock 1 "APRIL 2018" Linux "User Manuals"
 
 .SH NAME
-i3lock \- improved screen locker
+gemian-lock \- improved screen locker
 
 .SH SYNOPSIS
-.B i3lock
+.B gemian-lock
 .RB [\|\-v\|]
 .RB [\|\-n\|]
 .RB [\|\-b\|]
@@ -30,7 +30,7 @@ i3lock \- improved screen locker
 .RB [\|\-f\|]
 
 .SH DESCRIPTION
-.B i3lock
+.B gemian-lock
 is a simple screen locker like slock. After starting it, you will see a white
 screen (you can configure the color/an image). You can return to your screen by
 entering your password.
@@ -38,20 +38,20 @@ entering your password.
 .SH IMPROVEMENTS
 
 .IP \[bu] 2
-i3lock forks, so you can combine it with an alias to suspend to RAM (run "i3lock && echo mem > /sys/power/state" to get a locked screen after waking up your computer from suspend to RAM)
+gemian-lock forks, so you can combine it with an alias to suspend to RAM (run "gemian-lock && echo mem > /sys/power/state" to get a locked screen after waking up your computer from suspend to RAM)
 .IP \[bu]
 You can specify either a background color or a PNG image which will be displayed while your screen is locked.
 .IP \[bu]
-You can specify whether i3lock should bell upon a wrong password.
+You can specify whether gemian-lock should bell upon a wrong password.
 .IP \[bu]
-i3lock uses PAM and therefore is compatible with LDAP, etc.
+gemian-lock uses PAM and therefore is compatible with LDAP, etc.
 
 
 .SH OPTIONS
 .TP
 .B \-v, \-\-version
 Display the version of your
-.B i3lock
+.B gemian-lock
 
 .TP
 .B \-n, \-\-nofork
@@ -64,7 +64,7 @@ like when opening your laptop in a boring lecture.
 
 .TP
 .B \-u, \-\-no-unlock-indicator
-Disable the unlock indicator. i3lock will by default show an unlock indicator
+Disable the unlock indicator. gemian-lock will by default show an unlock indicator
 after pressing keys. This will give feedback for every keypress and it will
 show you the current PAM state (whether your password is currently being
 verified or whether it is wrong).
@@ -86,9 +86,9 @@ If an image is specified (via \-i) it will display the image tiled all over the 
 .TP
 .BI \-p\  win|default \fR,\ \fB\-\-pointer= win|default
 If you specify "default",
-.B i3lock
+.B gemian-lock
 does not hide your mouse pointer. If you specify "win",
-.B i3lock
+.B gemian-lock
 displays a hardcoded Windows-Pointer (thus enabling you to mess with your
 friends by using a screenshot of a Windows desktop as a locking-screen).
 
@@ -110,32 +110,10 @@ Show the number of failed attempts, if any.
 Enables debug logging.
 Note, that this will log the password used for authentication to stdout.
 
-.SH DPMS
-
-The \-d (\-\-dpms) option was removed from i3lock in version 2.8. There were
-plenty of use-cases that were not properly addressed, and plenty of bugs
-surrounding that feature. While features are not normally removed from i3 and
-its tools, we felt the need to make an exception in this case.
-
-Users who wish to explicitly enable DPMS only when their screen is locked can
-use a wrapper script around i3lock like the following:
-
-.Vb 6
-\&	#!/bin/sh
-\&	revert() {
-\&	  xset dpms 0 0 0
-\&	}
-\&	trap revert HUP INT TERM
-\&	xset +dpms dpms 5 5 5
-\&	i3lock -n
-\&	revert
-.Ve
-
-The \-I (-\-inactivity-timeout=seconds) was removed because it only makes sense with DPMS.
-
 .SH SEE ALSO
 .IR xautolock(1)
-\- use i3lock as your screen saver
+.IR xss-lock(1)
+\- use gemian-lock as your screen saver
 
 .SH AUTHOR
 Michael Stapelberg <michael+i3lock at stapelberg dot de>

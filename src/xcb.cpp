@@ -11,14 +11,13 @@
 #include <xcb/xcb_image.h>
 #include <xcb/xcb_atom.h>
 #include <xcb/xcb_aux.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <unistd.h>
-#include <assert.h>
+#include <cassert>
 #include <err.h>
-#include <time.h>
+#include <ctime>
 #include <sys/time.h>
 
 #include "cursors.h"
@@ -57,9 +56,9 @@ static uint32_t get_colorpixel(char *hex) {
     char strgroups[3][3] = {{hex[0], hex[1], '\0'},
                             {hex[2], hex[3], '\0'},
                             {hex[4], hex[5], '\0'}};
-    uint32_t rgb16[3] = {(strtol(strgroups[0], NULL, 16)),
-                         (strtol(strgroups[1], NULL, 16)),
-                         (strtol(strgroups[2], NULL, 16))};
+    uint32_t rgb16[3] = {static_cast<uint32_t>(strtol(strgroups[0], NULL, 16)),
+                         static_cast<uint32_t>(strtol(strgroups[1], NULL, 16)),
+                         static_cast<uint32_t>(strtol(strgroups[2], NULL, 16))};
 
     return (rgb16[0] << 16) + (rgb16[1] << 8) + rgb16[2];
 }
@@ -89,14 +88,14 @@ xcb_visualtype_t *get_root_visual_type(xcb_screen_t *screen) {
 xcb_pixmap_t create_bg_pixmap(xcb_connection_t *conn, xcb_screen_t *scr, u_int32_t *resolution, char *color) {
     xcb_pixmap_t bg_pixmap = xcb_generate_id(conn);
     xcb_create_pixmap(conn, scr->root_depth, bg_pixmap, scr->root,
-                      resolution[0], resolution[1]);
+                      static_cast<uint16_t>(resolution[0]), static_cast<uint16_t>(resolution[1]));
 
     /* Generate a Graphics Context and fill the pixmap with background color
      * (for images that are smaller than your screen) */
     xcb_gcontext_t gc = xcb_generate_id(conn);
     uint32_t values[] = {get_colorpixel(color)};
     xcb_create_gc(conn, gc, bg_pixmap, XCB_GC_FOREGROUND, values);
-    xcb_rectangle_t rect = {0, 0, resolution[0], resolution[1]};
+    xcb_rectangle_t rect = {0, 0, static_cast<uint16_t>(resolution[0]), static_cast<uint16_t>(resolution[1])};
     xcb_poly_fill_rectangle(conn, bg_pixmap, gc, 1, &rect);
     xcb_free_gc(conn, gc);
 
@@ -139,14 +138,14 @@ xcb_window_t open_fullscreen_window(xcb_connection_t *conn, xcb_screen_t *scr, c
                       mask,
                       values);
 
-    char *name = "i3lock";
+    const char *name = "gemian-lock";
     xcb_change_property(conn,
                         XCB_PROP_MODE_REPLACE,
                         win,
                         XCB_ATOM_WM_NAME,
                         XCB_ATOM_STRING,
                         8,
-                        strlen(name),
+                        static_cast<uint32_t>(strlen(name)),
                         name);
 
     /* Map the window (= make it visible) */
@@ -247,7 +246,7 @@ bool grab_pointer_and_keyboard(xcb_connection_t *conn, xcb_screen_t *screen, xcb
         usleep(50);
 
         struct timeval now;
-        if (gettimeofday(&now, NULL) == -1) {
+        if (gettimeofday(&now, nullptr) == -1) {
             err(EXIT_FAILURE, "gettimeofday");
         }
 
@@ -340,7 +339,7 @@ void _init_net_active_window(xcb_connection_t *conn) {
         conn,
         xcb_intern_atom(conn, 0, strlen("_NET_ACTIVE_WINDOW"), "_NET_ACTIVE_WINDOW"),
         &err);
-    if (atom_reply == NULL) {
+    if (atom_reply == nullptr) {
         fprintf(stderr, "X11 Error %d\n", err->error_code);
         free(err);
         return;
@@ -357,9 +356,9 @@ xcb_window_t find_focused_window(xcb_connection_t *conn, const xcb_window_t root
     xcb_get_property_reply_t *prop_reply = xcb_get_property_reply(
         conn,
         xcb_get_property_unchecked(
-            conn, false, root, _NET_ACTIVE_WINDOW, XCB_GET_PROPERTY_TYPE_ANY, 0, 1 /* word */),
-        NULL);
-    if (prop_reply == NULL) {
+                conn, static_cast<uint8_t>(false), root, _NET_ACTIVE_WINDOW, XCB_GET_PROPERTY_TYPE_ANY, 0, 1 /* word */),
+        nullptr);
+    if (prop_reply == nullptr) {
         goto out;
     }
     if (xcb_get_property_value_length(prop_reply) == 0) {
@@ -389,6 +388,6 @@ void set_focused_window(xcb_connection_t *conn, const xcb_window_t root, const x
     ev.format = 32;
     ev.data.data32[0] = 2; /* 2 = pager */
 
-    xcb_send_event(conn, false, root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT, (char *)&ev);
+    xcb_send_event(conn, static_cast<uint8_t>(false), root, XCB_EVENT_MASK_SUBSTRUCTURE_REDIRECT, (char *)&ev);
     xcb_flush(conn);
 }
