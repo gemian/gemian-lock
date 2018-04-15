@@ -771,7 +771,7 @@ static void maybe_close_sleep_lock_fd(void) {
 
 /*
  * Instead of polling the X connection socket we leave this to
- * xcb_poll_for_event() which knows better than we can ever know.
+ * xcb_wait_for_event() which knows better than we can ever know.
  *
  */
 static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
@@ -780,7 +780,7 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
     if (xcb_connection_has_error(conn))
         errx(EXIT_FAILURE, "X11 connection broke, did your server terminate?\n");
 
-    while ((event = xcb_poll_for_event(conn)) != NULL) {
+    while ((event = xcb_wait_for_event(conn)) != nullptr) {
         if (event->response_type == 0) {
             xcb_generic_error_t *error = (xcb_generic_error_t *)event;
             if (debug_mode)
