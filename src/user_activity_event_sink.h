@@ -28,8 +28,8 @@ class user_activity_event_sink {
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef USC_UNITY_USER_ACTIVITY_EVENT_SINK_H_
-#define USC_UNITY_USER_ACTIVITY_EVENT_SINK_H_
+#ifndef USC_USER_ACTIVITY_EVENT_SINK_H_
+#define USC_USER_ACTIVITY_EVENT_SINK_H_
 
 #include <mutex>
 #include <memory>

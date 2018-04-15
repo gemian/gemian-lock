@@ -18,7 +18,8 @@ add_executable(${PROJECT_NAME_LOWER}
         dbus_connection_handle.cpp
         clock.cpp
         power_button_event_sink.cpp
-        user_activity_event_sink.cpp)
+        user_activity_event_sink.cpp
+        lock_active_event_sink.cpp)
 
 target_link_libraries(${PROJECT_NAME_LOWER}
         ${LIBEV_LIBRARIES}
@@ -31,3 +32,15 @@ target_link_libraries(${PROJECT_NAME_LOWER}
         )
 
 install(TARGETS ${PROJECT_NAME_LOWER} RUNTIME DESTINATION bin)
+
+# Install data files
+install(FILES
+        org.thinkglobally.Gemian.conf
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/dbus-1/system.d
+        )
+install(FILES
+        org.thinkglobally.Gemian.PowerButton.xml
+        org.thinkglobally.Gemian.UserActivity.xml
+        org.thinkglobally.Gemian.Lock.xml
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/dbus-1/interfaces
+        )

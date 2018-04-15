@@ -14,8 +14,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef USC_UNITY_POWER_BUTTON_EVENT_SINK_H_
-#define USC_UNITY_POWER_BUTTON_EVENT_SINK_H_
+#ifndef USC_POWER_BUTTON_EVENT_SINK_H_
+#define USC_POWER_BUTTON_EVENT_SINK_H_
 
 #include "dbus_connection_handle.h"
 

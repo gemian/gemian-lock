@@ -51,6 +51,7 @@
 #include "power_button_event_sink.h"
 #include "clock.h"
 #include "user_activity_event_sink.h"
+#include "lock_active_event_sink.h"
 
 #define TSTAMP_N_SECS(n) (n * 1.0)
 #define TSTAMP_N_MINS(n) (60 * TSTAMP_N_SECS(n))
@@ -104,6 +105,7 @@ bool skip_repeated_empty_password = false;
 std::string dbus_bus_address();
 std::shared_ptr<usc::PowerButtonEventSink> power_button_event_sink;
 std::shared_ptr<usc::UserActivityEventSink> user_activity_event_sink;
+std::shared_ptr<LockActiveEventSink> lock_active_event_sink;
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -775,16 +777,17 @@ static void maybe_close_sleep_lock_fd() {
 
 /*
  * Instead of polling the X connection socket we leave this to
- * xcb_wait_for_event() which knows better than we can ever know.
+ * xcb_poll_for_event() which knows better than we can ever know.
  *
  */
 static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
     xcb_generic_event_t *event;
 
-    if (xcb_connection_has_error(conn))
+    if (xcb_connection_has_error(conn)) {
         errx(EXIT_FAILURE, "X11 connection broke, did your server terminate?\n");
+    }
 
-    while ((event = xcb_wait_for_event(conn)) != nullptr) {
+    while ((event = xcb_poll_for_event(conn)) != nullptr) {
         if (event->response_type == 0) {
             auto *error = (xcb_generic_error_t *)event;
             if (debug_mode)
@@ -903,6 +906,7 @@ static void raise_loop(xcb_window_t window) {
 int main(int argc, char *argv[]) {
     power_button_event_sink = std::make_shared<usc::PowerButtonEventSink>(dbus_bus_address());
     user_activity_event_sink = std::make_shared<usc::UserActivityEventSink>(dbus_bus_address());
+    lock_active_event_sink = std::make_shared<LockActiveEventSink>(dbus_bus_address());
 
     struct passwd *pw;
     char *username;
@@ -1170,6 +1174,8 @@ int main(int argc, char *argv[]) {
     ev_prepare_init(xcb_prepare, xcb_prepare_cb);
     ev_prepare_start(main_loop, xcb_prepare);
 
+    lock_active_event_sink->notify_lock_active();
+
     /* Invoke the event callback once to catch all the events which were
      * received up until now. ev will only pick up new events (when the X11
      * file descriptor becomes readable). */
@@ -1178,6 +1184,7 @@ int main(int argc, char *argv[]) {
 
     if (stolen_focus == XCB_NONE) {
         DEBUG("stole focus fail 0x%08x\n", stolen_focus);
+        lock_active_event_sink->notify_lock_inactive();
         return 0;
     }
 
@@ -1188,5 +1195,6 @@ int main(int argc, char *argv[]) {
     set_focused_window(conn, screen->root, stolen_focus);
     xcb_aux_sync(conn);
 
+    lock_active_event_sink->notify_lock_inactive();
     return 0;
 }

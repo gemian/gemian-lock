@@ -14,8 +14,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef USC_UNITY_USER_ACTIVITY_TYPE_H_
-#define USC_UNITY_USER_ACTIVITY_TYPE_H_
+#ifndef USC_USER_ACTIVITY_TYPE_H_
+#define USC_USER_ACTIVITY_TYPE_H_
 
 namespace usc
 {

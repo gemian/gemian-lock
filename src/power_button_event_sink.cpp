@@ -19,24 +19,24 @@
 
 namespace
 {
-    char const* const unity_power_button_name = "com.canonical.Unity.PowerButton";
-    char const* const unity_power_button_path = "/com/canonical/Unity/PowerButton";
-    char const* const unity_power_button_iface = "com.canonical.Unity.PowerButton";
+    char const* const power_button_name = "org.thinkglobally.Gemian.PowerButton";
+    char const* const power_button_path = "/org/thinkglobally/Gemian/PowerButton";
+    char const* const power_button_iface = "org.thinkglobally.Gemian.PowerButton";
 }
 
 usc::PowerButtonEventSink::PowerButtonEventSink(
         std::string const& dbus_address)
         : dbus_connection{dbus_address}
 {
-    dbus_connection.request_name(unity_power_button_name);
+    dbus_connection.request_name(power_button_name);
 }
 
 void usc::PowerButtonEventSink::notify_press()
 {
     DBusMessageHandle signal{
             dbus_message_new_signal(
-                    unity_power_button_path,
-                    unity_power_button_iface,
+                    power_button_path,
+                    power_button_iface,
                     "Press")};
 
     dbus_connection_send(dbus_connection, signal, nullptr);
@@ -47,8 +47,8 @@ void usc::PowerButtonEventSink::notify_release()
 {
     DBusMessageHandle signal{
             dbus_message_new_signal(
-                    unity_power_button_path,
-                    unity_power_button_iface,
+                    power_button_path,
+                    power_button_iface,
                     "Release")};
 
     dbus_connection_send(dbus_connection, signal, nullptr);

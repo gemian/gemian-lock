@@ -20,9 +20,9 @@
 
 namespace
 {
-    char const* const unity_user_activity_name = "com.canonical.Unity.UserActivity";
-    char const* const unity_user_activity_path = "/com/canonical/Unity/UserActivity";
-    char const* const unity_user_activity_iface = "com.canonical.Unity.UserActivity";
+    char const* const user_activity_name = "org.thinkglobally.Gemian.UserActivity";
+    char const* const user_activity_path = "/org/thinkglobally/Gemian/UserActivity";
+    char const* const user_activity_iface = "org.thinkglobally.Gemian.UserActivity";
 }
 
 usc::UserActivityEventSink::UserActivityEventSink(
@@ -31,7 +31,7 @@ usc::UserActivityEventSink::UserActivityEventSink(
           u_clock{std::make_shared<usc::Clock>()},
           event_period{500}
 {
-    dbus_connection.request_name(unity_user_activity_name);
+    dbus_connection.request_name(user_activity_name);
 }
 
 void usc::UserActivityEventSink::do_notify_activity_changing_power_state()
@@ -41,8 +41,8 @@ void usc::UserActivityEventSink::do_notify_activity_changing_power_state()
 
     DBusMessageHandle signal{
             dbus_message_new_signal(
-                    unity_user_activity_path,
-                    unity_user_activity_iface,
+                    user_activity_path,
+                    user_activity_iface,
                     "Activity"),
             DBUS_TYPE_INT32, &changing_power_state,
             DBUS_TYPE_INVALID};
@@ -58,8 +58,8 @@ void usc::UserActivityEventSink::do_notify_activity_extending_power_state()
 
     DBusMessageHandle signal{
             dbus_message_new_signal(
-                    unity_user_activity_path,
-                    unity_user_activity_iface,
+                    user_activity_path,
+                    user_activity_iface,
                     "Activity"),
             DBUS_TYPE_INT32, &extending_power_state,
             DBUS_TYPE_INVALID};
