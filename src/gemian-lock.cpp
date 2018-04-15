@@ -42,8 +42,6 @@
 #endif
 #include <xcb/xcb_aux.h>
 #include <xcb/randr.h>
-#include <memory>
-#include <mutex>
 
 #include "gemian-lock.h"
 #include "xcb.h"
@@ -106,11 +104,6 @@ bool skip_repeated_empty_password = false;
 std::string dbus_bus_address();
 std::shared_ptr<usc::PowerButtonEventSink> power_button_event_sink;
 std::shared_ptr<usc::UserActivityEventSink> user_activity_event_sink;
-std::mutex event_mutex;
-std::shared_ptr<usc::Clock> u_clock;
-std::chrono::milliseconds event_period;
-std::chrono::steady_clock::time_point last_activity_changing_power_state_event_time;
-std::chrono::steady_clock::time_point last_activity_extending_power_state_event_time;
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -134,27 +127,6 @@ std::string dbus_bus_address()
     return std::string{bus};
 }
 
-void notify_activity_changing_power_state()
-{
-    std::lock_guard<std::mutex> lock{event_mutex};
-
-    if (u_clock->now() >= last_activity_changing_power_state_event_time + event_period)
-    {
-        user_activity_event_sink->notify_activity_changing_power_state();
-        last_activity_changing_power_state_event_time = u_clock->now();
-    }
-}
-
-void notify_activity_extending_power_state()
-{
-    std::lock_guard<std::mutex> lock{event_mutex};
-
-    if (u_clock->now() >= last_activity_extending_power_state_event_time + event_period)
-    {
-        user_activity_event_sink->notify_activity_extending_power_state();
-        last_activity_extending_power_state_event_time = u_clock->now();
-    }
-}
 /*
  * Loads the XKB keymap from the X11 server and feeds it to xkbcommon.
  * Necessary so that we can properly let xkbcommon track the keyboard state and
@@ -827,12 +799,12 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
 
         switch (type) {
             case XCB_KEY_PRESS:
-                notify_activity_changing_power_state();
+                user_activity_event_sink->notify_activity_changing_power_state();
                 handle_key_press((xcb_key_press_event_t *)event);
                 break;
 
             case XCB_KEY_RELEASE:
-                notify_activity_extending_power_state();
+                user_activity_event_sink->notify_activity_extending_power_state();
                 handle_key_release((xcb_key_release_event_t *)event);
                 break;
 
@@ -931,8 +903,6 @@ static void raise_loop(xcb_window_t window) {
 int main(int argc, char *argv[]) {
     power_button_event_sink = std::make_shared<usc::PowerButtonEventSink>(dbus_bus_address());
     user_activity_event_sink = std::make_shared<usc::UserActivityEventSink>(dbus_bus_address());
-    u_clock = std::make_shared<usc::Clock>();
-    event_period = std::chrono::milliseconds{500};
 
     struct passwd *pw;
     char *username;

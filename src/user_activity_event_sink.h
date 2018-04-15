@@ -31,7 +31,10 @@ class user_activity_event_sink {
 #ifndef USC_UNITY_USER_ACTIVITY_EVENT_SINK_H_
 #define USC_UNITY_USER_ACTIVITY_EVENT_SINK_H_
 
+#include <mutex>
+#include <memory>
 #include "dbus_connection_handle.h"
+#include "clock.h"
 
 namespace usc
 {
@@ -45,7 +48,16 @@ namespace usc
         void notify_activity_extending_power_state();
 
     private:
+        void do_notify_activity_changing_power_state();
+        void do_notify_activity_extending_power_state();
+
+    private:
         DBusConnectionHandle dbus_connection;
+        std::mutex event_mutex;
+        std::shared_ptr<usc::Clock> u_clock;
+        std::chrono::milliseconds event_period;
+        std::chrono::steady_clock::time_point last_activity_changing_power_state_event_time;
+        std::chrono::steady_clock::time_point last_activity_extending_power_state_event_time;
     };
 
 }

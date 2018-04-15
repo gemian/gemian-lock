@@ -27,12 +27,14 @@ namespace
 
 usc::UserActivityEventSink::UserActivityEventSink(
         std::string const& dbus_address)
-        : dbus_connection{dbus_address}
+        : dbus_connection{dbus_address},
+          u_clock{std::make_shared<usc::Clock>()},
+          event_period{500}
 {
     dbus_connection.request_name(unity_user_activity_name);
 }
 
-void usc::UserActivityEventSink::notify_activity_changing_power_state()
+void usc::UserActivityEventSink::do_notify_activity_changing_power_state()
 {
     auto const changing_power_state =
             static_cast<int>(UserActivityType::changing_power_state);
@@ -49,7 +51,7 @@ void usc::UserActivityEventSink::notify_activity_changing_power_state()
     dbus_connection_flush(dbus_connection);
 }
 
-void usc::UserActivityEventSink::notify_activity_extending_power_state()
+void usc::UserActivityEventSink::do_notify_activity_extending_power_state()
 {
     auto const extending_power_state =
             static_cast<int>(UserActivityType::extending_power_state);
@@ -64,4 +66,26 @@ void usc::UserActivityEventSink::notify_activity_extending_power_state()
 
     dbus_connection_send(dbus_connection, signal, nullptr);
     dbus_connection_flush(dbus_connection);
+}
+
+void usc::UserActivityEventSink::notify_activity_changing_power_state()
+{
+    std::lock_guard<std::mutex> lock{event_mutex};
+
+    if (u_clock->now() >= last_activity_changing_power_state_event_time + event_period)
+    {
+        do_notify_activity_changing_power_state();
+        last_activity_changing_power_state_event_time = u_clock->now();
+    }
+}
+
+void usc::UserActivityEventSink::notify_activity_extending_power_state()
+{
+    std::lock_guard<std::mutex> lock{event_mutex};
+
+    if (u_clock->now() >= last_activity_extending_power_state_event_time + event_period)
+    {
+        do_notify_activity_extending_power_state();
+        last_activity_extending_power_state_event_time = u_clock->now();
+    }
 }
