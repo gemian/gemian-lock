@@ -34,7 +34,7 @@ usc::UserActivityEventSink::UserActivityEventSink(
 
 void usc::UserActivityEventSink::notify_activity_changing_power_state()
 {
-    int const changing_power_state =
+    auto const changing_power_state =
             static_cast<int>(UserActivityType::changing_power_state);
 
     DBusMessageHandle signal{
@@ -51,7 +51,7 @@ void usc::UserActivityEventSink::notify_activity_changing_power_state()
 
 void usc::UserActivityEventSink::notify_activity_extending_power_state()
 {
-    int const extending_power_state =
+    auto const extending_power_state =
             static_cast<int>(UserActivityType::extending_power_state);
 
     DBusMessageHandle signal{

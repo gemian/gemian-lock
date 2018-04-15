@@ -104,11 +104,11 @@ bool ignore_empty_password = false;
 bool skip_repeated_empty_password = false;
 
 std::string dbus_bus_address();
-std::shared_ptr<usc::PowerButtonEventSink> power_button_event_sink = std::make_shared<usc::PowerButtonEventSink>(dbus_bus_address());
-std::shared_ptr<usc::UserActivityEventSink> user_activity_event_sink = std::make_shared<usc::UserActivityEventSink>(dbus_bus_address());
+std::shared_ptr<usc::PowerButtonEventSink> power_button_event_sink;
+std::shared_ptr<usc::UserActivityEventSink> user_activity_event_sink;
 std::mutex event_mutex;
-std::shared_ptr<usc::Clock> u_clock = std::make_shared<usc::Clock>();
-std::chrono::milliseconds const event_period{500};
+std::shared_ptr<usc::Clock> u_clock;
+std::chrono::milliseconds event_period;
 std::chrono::steady_clock::time_point last_activity_changing_power_state_event_time;
 std::chrono::steady_clock::time_point last_activity_extending_power_state_event_time;
 
@@ -119,7 +119,7 @@ std::chrono::steady_clock::time_point last_activity_extending_power_state_event_
  * Decrements i to point to the previous unicode glyph
  *
  */
-void u8_dec(char *s, int *i) {
+void u8_dec(const char *s, int *i) {
     (void)(isutf(s[--(*i)]) || isutf(s[--(*i)]) || isutf(s[--(*i)]) || --(*i));
 }
 
@@ -163,7 +163,7 @@ void notify_activity_extending_power_state()
  */
 static bool load_keymap() {
     if (xkb_context == nullptr) {
-        if ((xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS)) == NULL) {
+        if ((xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS)) == nullptr) {
             fprintf(stderr, "[gemian-lock] could not create xkbcommon context\n");
             return false;
         }
@@ -173,14 +173,15 @@ static bool load_keymap() {
 
     int32_t device_id = xkb_x11_get_core_keyboard_device_id(conn);
     DEBUG("device = %d\n", device_id);
-    if ((xkb_keymap = xkb_x11_keymap_new_from_device(xkb_context, conn, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS)) == NULL) {
+    if ((xkb_keymap = xkb_x11_keymap_new_from_device(xkb_context, conn, device_id, XKB_KEYMAP_COMPILE_NO_FLAGS)) ==
+            nullptr) {
         fprintf(stderr, "[gemian-lock] xkb_x11_keymap_new_from_device failed\n");
         return false;
     }
 
     struct xkb_state *new_state =
         xkb_x11_state_new_from_device(xkb_keymap, conn, device_id);
-    if (new_state == NULL) {
+    if (new_state == nullptr) {
         fprintf(stderr, "[gemian-lock] xkb_x11_state_new_from_device failed\n");
         return false;
     }
@@ -198,13 +199,14 @@ static bool load_keymap() {
 static bool load_compose_table(const char *locale) {
     xkb_compose_table_unref(xkb_compose_table);
 
-    if ((xkb_compose_table = xkb_compose_table_new_from_locale(xkb_context, locale, XKB_COMPOSE_COMPILE_NO_FLAGS)) == NULL) {
+    if ((xkb_compose_table = xkb_compose_table_new_from_locale(xkb_context, locale, XKB_COMPOSE_COMPILE_NO_FLAGS)) ==
+            nullptr) {
         fprintf(stderr, "[gemian-lock] xkb_compose_table_new_from_locale failed\n");
         return false;
     }
 
     struct xkb_compose_state *new_compose_state = xkb_compose_state_new(xkb_compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
-    if (new_compose_state == NULL) {
+    if (new_compose_state == nullptr) {
         fprintf(stderr, "[gemian-lock] xkb_compose_state_new failed\n");
         return false;
     }
@@ -571,7 +573,7 @@ static void handle_key_press(xcb_key_press_event_t *event) {
         redraw_screen();
         unlock_state = STATE_KEY_PRESSED;
 
-        struct ev_timer *timeout = NULL;
+        struct ev_timer *timeout = nullptr;
         START_TIMER(timeout, TSTAMP_N_SECS(0.25), redraw_timeout);
         STOP_TIMER(clear_indicator_timeout);
     }
@@ -675,11 +677,11 @@ static void process_xkb_event(xcb_generic_event_t *gevent) {
  * and also redraw the image, if any.
  *
  */
-void handle_screen_resize(void) {
+void handle_screen_resize() {
     xcb_get_geometry_cookie_t geomc;
     xcb_get_geometry_reply_t *geom;
     geomc = xcb_get_geometry(conn, screen->root);
-    if ((geom = xcb_get_geometry_reply(conn, geomc, 0)) == NULL)
+    if ((geom = xcb_get_geometry_reply(conn, geomc, nullptr)) == nullptr)
         return;
 
     if (last_resolution[0] == geom->width &&
@@ -710,7 +712,7 @@ static bool verify_png_image(const char *image_path) {
 
     /* Check file exists and has correct PNG header */
     FILE *png_file = fopen(image_path, "r");
-    if (png_file == NULL) {
+    if (png_file == nullptr) {
         fprintf(stderr, "Image file path \"%s\" cannot be opened: %s\n", image_path, strerror(errno));
         return false;
     }
@@ -788,7 +790,7 @@ static void xcb_prepare_cb(EV_P_ ev_prepare *w, int revents) {
  * being run from there.
  *
  */
-static void maybe_close_sleep_lock_fd(void) {
+static void maybe_close_sleep_lock_fd() {
     const char *sleep_lock_fd = getenv("XSS_SLEEP_LOCK_FD");
     char *endptr;
     if (sleep_lock_fd && *sleep_lock_fd != 0) {
@@ -812,7 +814,7 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
 
     while ((event = xcb_wait_for_event(conn)) != nullptr) {
         if (event->response_type == 0) {
-            xcb_generic_error_t *error = (xcb_generic_error_t *)event;
+            auto *error = (xcb_generic_error_t *)event;
             if (debug_mode)
                 fprintf(stderr, "X11 Error received! sequence 0x%x, error_code = %d\n",
                         error->sequence, error->error_code);
@@ -927,6 +929,11 @@ static void raise_loop(xcb_window_t window) {
 }
 
 int main(int argc, char *argv[]) {
+    power_button_event_sink = std::make_shared<usc::PowerButtonEventSink>(dbus_bus_address());
+    user_activity_event_sink = std::make_shared<usc::UserActivityEventSink>(dbus_bus_address());
+    u_clock = std::make_shared<usc::Clock>();
+    event_period = std::chrono::milliseconds{500};
+
     struct passwd *pw;
     char *username;
     char *image_path = nullptr;

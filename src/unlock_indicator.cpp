@@ -131,9 +131,9 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
         char strgroups[3][3] = {{color[0], color[1], '\0'},
                                 {color[2], color[3], '\0'},
                                 {color[4], color[5], '\0'}};
-        uint32_t rgb16[3] = {static_cast<uint32_t>(strtol(strgroups[0], NULL, 16)),
-                             static_cast<uint32_t>(strtol(strgroups[1], NULL, 16)),
-                             static_cast<uint32_t>(strtol(strgroups[2], NULL, 16))};
+        uint32_t rgb16[3] = {static_cast<uint32_t>(strtol(strgroups[0], nullptr, 16)),
+                             static_cast<uint32_t>(strtol(strgroups[1], nullptr, 16)),
+                             static_cast<uint32_t>(strtol(strgroups[2], nullptr, 16))};
         cairo_set_source_rgb(xcb_ctx, rgb16[0] / 255.0, rgb16[1] / 255.0, rgb16[2] / 255.0);
         cairo_rectangle(xcb_ctx, 0, 0, resolution[0], resolution[1]);
         cairo_fill(xcb_ctx);
@@ -344,7 +344,7 @@ xcb_pixmap_t draw_image(uint32_t *resolution) {
  * Calls draw_image on a new pixmap and swaps that with the current pixmap
  *
  */
-void redraw_screen(void) {
+void redraw_screen() {
     DEBUG("redraw_screen(unlock_state = %d, auth_state = %d)\n", unlock_state, auth_state);
     xcb_pixmap_t bg_pixmap = draw_image(last_resolution);
     uint32_t value_list[] ={bg_pixmap};
@@ -361,7 +361,7 @@ void redraw_screen(void) {
  * password buffer.
  *
  */
-void clear_indicator(void) {
+void clear_indicator() {
     if (input_position == 0) {
         unlock_state = STATE_STARTED;
     } else

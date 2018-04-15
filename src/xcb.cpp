@@ -56,15 +56,15 @@ static uint32_t get_colorpixel(char *hex) {
     char strgroups[3][3] = {{hex[0], hex[1], '\0'},
                             {hex[2], hex[3], '\0'},
                             {hex[4], hex[5], '\0'}};
-    uint32_t rgb16[3] = {static_cast<uint32_t>(strtol(strgroups[0], NULL, 16)),
-                         static_cast<uint32_t>(strtol(strgroups[1], NULL, 16)),
-                         static_cast<uint32_t>(strtol(strgroups[2], NULL, 16))};
+    uint32_t rgb16[3] = {static_cast<uint32_t>(strtol(strgroups[0], nullptr, 16)),
+                         static_cast<uint32_t>(strtol(strgroups[1], nullptr, 16)),
+                         static_cast<uint32_t>(strtol(strgroups[2], nullptr, 16))};
 
     return (rgb16[0] << 16) + (rgb16[1] << 8) + rgb16[2];
 }
 
 xcb_visualtype_t *get_root_visual_type(xcb_screen_t *screen) {
-    xcb_visualtype_t *visual_type = NULL;
+    xcb_visualtype_t *visual_type = nullptr;
     xcb_depth_iterator_t depth_iter;
     xcb_visualtype_iterator_t visual_iter;
 
@@ -82,7 +82,7 @@ xcb_visualtype_t *get_root_visual_type(xcb_screen_t *screen) {
         }
     }
 
-    return NULL;
+    return nullptr;
 }
 
 xcb_pixmap_t create_bg_pixmap(xcb_connection_t *conn, xcb_screen_t *scr, u_int32_t *resolution, char *color) {
@@ -180,7 +180,7 @@ bool grab_pointer_and_keyboard(xcb_connection_t *conn, xcb_screen_t *screen, xcb
     /* Using few variables to trigger a redraw_screen() if too many tries */
     bool redrawn = false;
     struct timeval start;
-    if (gettimeofday(&start, NULL) == -1) {
+    if (gettimeofday(&start, nullptr) == -1) {
         err(EXIT_FAILURE, "gettimeofday");
     }
 
@@ -196,7 +196,7 @@ bool grab_pointer_and_keyboard(xcb_connection_t *conn, xcb_screen_t *screen, xcb
             cursor,              /* we change the cursor to whatever the user wanted */
             XCB_CURRENT_TIME);
 
-        if ((preply = xcb_grab_pointer_reply(conn, pcookie, NULL)) &&
+        if ((preply = xcb_grab_pointer_reply(conn, pcookie, nullptr)) &&
             preply->status == XCB_GRAB_STATUS_SUCCESS) {
             free(preply);
             break;
@@ -209,7 +209,7 @@ bool grab_pointer_and_keyboard(xcb_connection_t *conn, xcb_screen_t *screen, xcb
         usleep(50);
 
         struct timeval now;
-        if (gettimeofday(&now, NULL) == -1) {
+        if (gettimeofday(&now, nullptr) == -1) {
             err(EXIT_FAILURE, "gettimeofday");
         }
 
@@ -233,7 +233,7 @@ bool grab_pointer_and_keyboard(xcb_connection_t *conn, xcb_screen_t *screen, xcb
             XCB_GRAB_MODE_ASYNC, /* process events as normal, do not require sync */
             XCB_GRAB_MODE_ASYNC);
 
-        if ((kreply = xcb_grab_keyboard_reply(conn, kcookie, NULL)) &&
+        if ((kreply = xcb_grab_keyboard_reply(conn, kcookie, nullptr)) &&
             kreply->status == XCB_GRAB_STATUS_SUCCESS) {
             free(kreply);
             break;
@@ -300,7 +300,7 @@ xcb_cursor_t create_cursor(xcb_connection_t *conn, xcb_screen_t *screen, xcb_win
                                                 1,
                                                 screen->white_pixel,
                                                 screen->black_pixel,
-                                                NULL);
+                                                nullptr);
 
     mask = xcb_create_pixmap_from_bitmap_data(conn,
                                               win,
@@ -310,7 +310,7 @@ xcb_cursor_t create_cursor(xcb_connection_t *conn, xcb_screen_t *screen, xcb_win
                                               1,
                                               screen->white_pixel,
                                               screen->black_pixel,
-                                              NULL);
+                                              nullptr);
 
     cursor = xcb_generate_id(conn);
 

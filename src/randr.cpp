@@ -22,14 +22,14 @@
 int xr_screens = 0;
 
 /* The resolutions of the currently present Xinerama screens. */
-Rect *xr_resolutions = NULL;
+Rect *xr_resolutions = nullptr;
 
 static bool xinerama_active;
 static bool has_randr = false;
 static bool has_randr_1_5 = false;
 extern bool debug_mode;
 
-void _xinerama_init(void);
+void _xinerama_init();
 
 void randr_init(int *event_base, xcb_window_t root) {
     const xcb_query_extension_reply_t *extreply;
@@ -45,7 +45,7 @@ void randr_init(int *event_base, xcb_window_t root) {
     xcb_randr_query_version_reply_t *randr_version =
         xcb_randr_query_version_reply(
             conn, xcb_randr_query_version(conn, XCB_RANDR_MAJOR_VERSION, XCB_RANDR_MINOR_VERSION), &err);
-    if (err != NULL) {
+    if (err != nullptr) {
         DEBUG("Could not query RandR version: X11 error code %d\n", err->error_code);
         _xinerama_init();
         return;
@@ -58,7 +58,7 @@ void randr_init(int *event_base, xcb_window_t root) {
 
     free(randr_version);
 
-    if (event_base != NULL)
+    if (event_base != nullptr)
         *event_base = extreply->first_event;
 
     xcb_randr_select_input(conn, root,
@@ -70,7 +70,7 @@ void randr_init(int *event_base, xcb_window_t root) {
     xcb_flush(conn);
 }
 
-void _xinerama_init(void) {
+void _xinerama_init() {
     if (!xcb_get_extension_data(conn, &xcb_xinerama_id)->present) {
         DEBUG("Xinerama extension not found, disabling.\n");
         return;
@@ -80,7 +80,7 @@ void _xinerama_init(void) {
     xcb_xinerama_is_active_reply_t *reply;
 
     cookie = xcb_xinerama_is_active(conn);
-    reply = xcb_xinerama_is_active_reply(conn, cookie, NULL);
+    reply = xcb_xinerama_is_active_reply(conn, cookie, nullptr);
     if (!reply)
         return;
 
@@ -111,7 +111,7 @@ static bool _randr_query_monitors_15(xcb_window_t root) {
     xcb_randr_get_monitors_reply_t *monitors =
         xcb_randr_get_monitors_reply(
             conn, xcb_randr_get_monitors(conn, root, true), &err);
-    if (err != NULL) {
+    if (err != nullptr) {
         DEBUG("Could not get RandR monitors: X11 error code %d\n", err->error_code);
         free(err);
         /* Fall back to RandR ≤ 1.4 */
@@ -168,8 +168,8 @@ static bool _randr_query_outputs_14(xcb_window_t root) {
     rcookie = xcb_randr_get_screen_resources_current(conn, root);
 
     xcb_randr_get_screen_resources_current_reply_t *res =
-        xcb_randr_get_screen_resources_current_reply(conn, rcookie, NULL);
-    if (res == NULL) {
+        xcb_randr_get_screen_resources_current_reply(conn, rcookie, nullptr);
+    if (res == nullptr) {
         DEBUG("Could not query screen resources.\n");
         return false;
     }
@@ -201,7 +201,7 @@ static bool _randr_query_outputs_14(xcb_window_t root) {
     for (int i = 0; i < len; i++) {
         xcb_randr_get_output_info_reply_t *output;
 
-        if ((output = xcb_randr_get_output_info_reply(conn, ocookie[i], NULL)) == NULL) {
+        if ((output = xcb_randr_get_output_info_reply(conn, ocookie[i], nullptr)) == nullptr) {
             continue;
         }
 
@@ -213,7 +213,7 @@ static bool _randr_query_outputs_14(xcb_window_t root) {
         xcb_randr_get_crtc_info_cookie_t icookie;
         xcb_randr_get_crtc_info_reply_t *crtc;
         icookie = xcb_randr_get_crtc_info(conn, output->crtc, cts);
-        if ((crtc = xcb_randr_get_crtc_info_reply(conn, icookie, NULL)) == NULL) {
+        if ((crtc = xcb_randr_get_crtc_info_reply(conn, icookie, nullptr)) == nullptr) {
             DEBUG("Skipping output: could not get CRTC (0x%08x)\n", output->crtc);
             free(output);
             continue;
@@ -241,7 +241,7 @@ static bool _randr_query_outputs_14(xcb_window_t root) {
     return true;
 }
 
-void _xinerama_query_screens(void) {
+void _xinerama_query_screens() {
     if (!xinerama_active) {
         return;
     }
