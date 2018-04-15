@@ -2,12 +2,12 @@ Source: gemian-lock
 Section: utils
 Priority: optional
 Maintainer: Adam Boardman <adamboardman@gmail.com>
-Build-Depends: debhelper (>= 9),
+Build-Depends: cmake (>= 2.8.9),
                pkg-config,
+               debhelper (>= 9),
                libpam0g-dev,
                libcairo2-dev,
                libxcb1-dev,
-               libxcb-dpms0-dev,
                libxcb-image0-dev,
                libxcb-util0-dev,
                libev-dev,
@@ -16,7 +16,7 @@ Build-Depends: debhelper (>= 9),
                libxkbcommon-x11-dev (>= 0.5.0),
                libxcb-xkb-dev,
                extra-cmake-modules
-Standards-Version: 3.9.7
+Standards-Version: 3.9.8
 Homepage: https://github.com/gemian/gemian-lock
 Vcs-Git: https://github.com/gemian/gemian-lock.git
 Vcs-Browser: https://github.com/gemian/gemian-lock
