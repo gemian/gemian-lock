@@ -26,6 +26,7 @@ Package: gemian-lock
 Architecture: any
 Section: x11
 Depends: ${shlibs:Depends}, ${misc:Depends}
+Suggests: saytime
 Description: improved screen locker
  gemian-lock is a simple screen locker like slock. After starting it, you will
  see a lock screen (you can configure the color/an image). You can return

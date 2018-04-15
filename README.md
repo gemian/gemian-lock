@@ -1,22 +1,19 @@
 gemian-lock - improved screen locker
-===============================
-gemian-lock is a simple screen locker like slock. After starting it, you will
-see a white screen (you can configure the color/an image). You can return
-to your screen by entering your password.
+====================================
+gemian-lock is a simple lock screen with some Gemini PDA specific features.
 
-Many little improvements have been made to gemian-lock over time:
+Currently
+---------
+- Requires the user to enter their password to unlock their device.
+- Whilst locked it supports the Gemini external button as a 'saytime' button. Requires saytime availability.
 
-- gemian-lock forks, so you can combine it with an alias to suspend to RAM
-  (run "gemian-lock && echo mem > /sys/power/state" to get a locked screen
-   after waking up your computer from suspend to RAM)
-
-- You can specify either a background color or a PNG image which will be
-  displayed while your screen is locked.
-
-- You can specify whether gemian-lock should bell upon a wrong password.
-
-- gemian-lock uses PAM and therefore is compatible with LDAP etc.
-  On OpenBSD gemian-lock uses the bsd_auth(3) framework.
+TODO
+----
+- Should plug itself into X as the screensaver
+- External button should answer an incoming call if present
+- Should indicate activity+power button activity to repowerd to enable efficient power saving
+- Passphrase should be optional (including config widget)
+- Should display notifications of messages/missed calls etc
 
 Requirements
 ------------
@@ -34,13 +31,11 @@ Requirements
 - libxkbcommon-x11 >= 0.5.0
 
 Running gemian-lock
--------------
+-------------------
 Simply invoke the 'gemian-lock' command. To get out of it, enter your password and
 press enter.
 
-On OpenBSD the `gemian-lock` binary needs to be setgid `auth` to call the
-authentication helpers, e.g. `/usr/libexec/auth/login_passwd`.
-
 Upstream
 --------
-Please submit pull requests to https://github.com/i3/i3lock
+We doubt the upstream project will be interested in our changes, but for reference it is:
+https://github.com/i3/i3lock
