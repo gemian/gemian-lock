@@ -14,9 +14,11 @@ add_executable(${PROJECT_NAME_LOWER}
         randr.cpp
         unlock_indicator.cpp
         xcb.cpp
+        dbus_message_handle.cpp
+        dbus_connection_handle.cpp
+        clock.cpp
         power_button_event_sink.cpp
-        power_button_event_sink.h
-        dbus_message_handle.cpp dbus_connection_handle.cpp)
+        user_activity_event_sink.cpp)
 
 target_link_libraries(${PROJECT_NAME_LOWER}
         ${LIBEV_LIBRARIES}
