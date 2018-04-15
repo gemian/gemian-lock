@@ -42,12 +42,14 @@
 #endif
 #include <xcb/xcb_aux.h>
 #include <xcb/randr.h>
+#include <memory>
 
 #include "gemian-lock.h"
 #include "xcb.h"
 #include "cursors.h"
 #include "unlock_indicator.h"
 #include "randr.h"
+#include "power_button_event_sink.h"
 
 #define TSTAMP_N_SECS(n) (n * 1.0)
 #define TSTAMP_N_MINS(n) (60 * TSTAMP_N_SECS(n))
@@ -93,10 +95,13 @@ static uint8_t xkb_base_event;
 static uint8_t xkb_base_error;
 static int randr_base = -1;
 
-cairo_surface_t *img = NULL;
+cairo_surface_t *img = nullptr;
 bool tile = false;
 bool ignore_empty_password = false;
 bool skip_repeated_empty_password = false;
+
+std::string dbus_bus_address();
+std::shared_ptr<usc::PowerButtonEventSink> power_button_event_sink = std::make_shared<usc::PowerButtonEventSink>(dbus_bus_address());
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -107,6 +112,17 @@ bool skip_repeated_empty_password = false;
  */
 void u8_dec(char *s, int *i) {
     (void)(isutf(s[--(*i)]) || isutf(s[--(*i)]) || isutf(s[--(*i)]) || --(*i));
+}
+
+std::string dbus_bus_address()
+{
+    static char const* const default_bus_address{"unix:path=/var/run/dbus/system_bus_socket"};
+
+    char const* bus = getenv("DBUS_SYSTEM_BUS_ADDRESS");
+    if (!bus)
+        bus = default_bus_address;
+
+    return std::string{bus};
 }
 
 /*
@@ -443,8 +459,9 @@ static void handle_key_press(xcb_key_press_event_t *event) {
     }
 
     switch (ksym) {
-        case XKB_KEY_u:
         case XKB_KEY_Escape:
+            power_button_event_sink->notify_press();
+        case XKB_KEY_u:
             if ((ksym == XKB_KEY_u && ctrl) ||
                 ksym == XKB_KEY_Escape) {
                 DEBUG("C-u pressed\n");
@@ -530,6 +547,22 @@ static void handle_key_press(xcb_key_press_event_t *event) {
     }
 
     START_TIMER(discard_passwd_timeout, TSTAMP_N_MINS(3), discard_passwd_cb);
+}
+
+/*
+ * Handle key releases.
+ */
+static void handle_key_release(xcb_key_release_event_t *event) {
+    xkb_keysym_t ksym;
+
+    ksym = xkb_state_key_get_one_sym(xkb_state, event->detail);
+
+    switch (ksym) {
+        case XKB_KEY_Escape:
+            power_button_event_sink->notify_release();
+        default:
+            break;
+    }
 }
 
 /*
@@ -763,6 +796,10 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
         switch (type) {
             case XCB_KEY_PRESS:
                 handle_key_press((xcb_key_press_event_t *)event);
+                break;
+
+            case XCB_KEY_RELEASE:
+                handle_key_release((xcb_key_release_event_t *)event);
                 break;
 
             case XCB_VISIBILITY_NOTIFY:

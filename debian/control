@@ -4,7 +4,9 @@ Priority: optional
 Maintainer: Adam Boardman <adamboardman@gmail.com>
 Build-Depends: cmake (>= 2.8.9),
                pkg-config,
+               dbus,
                debhelper (>= 9),
+               libdbus-1-dev,
                libpam0g-dev,
                libcairo2-dev,
                libxcb1-dev,

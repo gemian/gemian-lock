@@ -13,6 +13,7 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake;${CMAKE_MODULE_PATH};${ECM_MODU
 include(GNUInstallDirs)
 
 find_package(PkgConfig)
+pkg_check_modules(DBUS REQUIRED dbus-1)
 
 find_package(PAM REQUIRED)
 find_package(EV REQUIRED)
