@@ -14,6 +14,8 @@ TODO
 - Should indicate activity+power button activity to repowerd to enable efficient power saving
 - Passphrase should be optional (including config widget)
 - Should display notifications of messages/missed calls etc
+- Should offer emergency calling whilst locked
+- Should display emergency contact information (optionally)
 
 Requirements
 ------------
