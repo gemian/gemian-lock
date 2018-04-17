@@ -6,12 +6,12 @@ Currently
 ---------
 - Requires the user to enter their password to unlock their device.
 - Whilst locked it supports the Gemini external button as a 'saytime' button. Requires saytime availability.
+- Passes activity to repowerd to enable efficient power saving
 
 TODO
 ----
 - Should plug itself into X as the screensaver
 - External button should answer an incoming call if present
-- Should indicate activity+power button activity to repowerd to enable efficient power saving
 - Passphrase should be optional (including config widget)
 - Should display notifications of messages/missed calls etc
 - Should offer emergency calling whilst locked
