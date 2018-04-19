@@ -802,13 +802,13 @@ static void xcb_check_cb(EV_P_ ev_check *w, int revents) {
 
         switch (type) {
             case XCB_KEY_PRESS:
-                user_activity_event_sink->notify_activity_changing_power_state();
                 handle_key_press((xcb_key_press_event_t *)event);
+                user_activity_event_sink->notify_activity_changing_power_state();
                 break;
 
             case XCB_KEY_RELEASE:
-                user_activity_event_sink->notify_activity_extending_power_state();
                 handle_key_release((xcb_key_release_event_t *)event);
+                user_activity_event_sink->notify_activity_extending_power_state();
                 break;
 
             case XCB_VISIBILITY_NOTIFY:
