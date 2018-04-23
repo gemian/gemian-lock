@@ -63,6 +63,7 @@
 typedef void (*ev_callback_t)(EV_P_ ev_timer *w, int revents);
 static void input_done(void);
 
+char default_color[7] = "ffffff";
 char color[7] = "ffffff";
 uint32_t last_resolution[2];
 xcb_window_t win;
@@ -910,7 +911,7 @@ int main(int argc, char *argv[]) {
 
     struct passwd *pw;
     char *username;
-    char *image_path = nullptr;
+    std::string image_path;
 #ifndef __OpenBSD__
     int ret;
     struct pam_conv conv = {conv_callback, nullptr};
@@ -965,7 +966,7 @@ int main(int argc, char *argv[]) {
                 unlock_indicator = false;
                 break;
             case 'i':
-                image_path = strdup(optarg);
+                image_path = optarg;
                 break;
             case 't':
                 tile = true;
@@ -1090,9 +1091,15 @@ int main(int argc, char *argv[]) {
     uint32_t values_list[] = {XCB_EVENT_MASK_STRUCTURE_NOTIFY};
     xcb_change_window_attributes(conn, screen->root, XCB_CW_EVENT_MASK, values_list);
 
-    if (verify_png_image(image_path)) {
+    if (image_path.length() == 0 && strcmp(default_color, color) == 0) {
+        image_path = PACKAGE_DATA_DIR;
+        image_path += "/images/default.png";
+        DEBUG("default image: %s\n", image_path.c_str());
+    }
+
+    if (verify_png_image(image_path.c_str())) {
         /* Create a pixmap to render on, fill it with the background color */
-        img = cairo_image_surface_create_from_png(image_path);
+        img = cairo_image_surface_create_from_png(image_path.c_str());
         /* In case loading failed, we just pretend no -i was specified. */
         if (cairo_surface_status(img) != CAIRO_STATUS_SUCCESS) {
             fprintf(stderr, "Could not load image \"%s\": %s\n",
@@ -1100,7 +1107,7 @@ int main(int argc, char *argv[]) {
             img = nullptr;
         }
     }
-    free(image_path);
+    image_path.clear();
 
     /* Pixmap on which the image is rendered to (if any) */
     xcb_pixmap_t bg_pixmap = draw_image(last_resolution);

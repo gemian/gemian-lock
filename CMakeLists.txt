@@ -18,6 +18,5 @@ pkg_check_modules(DBUS REQUIRED dbus-1)
 find_package(PAM REQUIRED)
 find_package(EV REQUIRED)
 find_package(XCB REQUIRED)
-#find_package(X11 REQUIRED)
 
 add_subdirectory(src)

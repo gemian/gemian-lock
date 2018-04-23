@@ -1,4 +1,7 @@
 configure_file(config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
+configure_file(default.png ${CMAKE_BINARY_DIR}/images/${f} COPYONLY)
+
+add_definitions(-DPACKAGE_DATA_DIR="${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME_LOWER}")
 
 include_directories(
         ${CMAKE_CURRENT_BINARY_DIR}
@@ -44,3 +47,4 @@ install(FILES
         org.thinkglobally.Gemian.Lock.xml
         DESTINATION ${CMAKE_INSTALL_DATADIR}/dbus-1/interfaces
         )
+install(FILES default.png DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME_LOWER}/images)
