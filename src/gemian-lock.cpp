@@ -490,7 +490,7 @@ static void handle_key_press(xcb_key_press_event_t *event) {
 
         case XKB_KEY_XF86Send:
             //Gemini PDA external silver button
-            user_activity_event_sink->notify_activity_changing_power_state();
+            user_activity_event_sink->notify_activity_extending_power_state();
             //Ultimately this should answer calls or launch voice assistant, for now we will just say the time
             system("saytime -f %l%M");
             break;
