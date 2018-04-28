@@ -467,7 +467,9 @@ static void handle_key_press(xcb_key_press_event_t *event) {
 
     switch (ksym) {
         case XKB_KEY_Escape:
-            power_button_event_sink->notify_press();
+            power_button_event_sink->notify_on_press();
+            //also pass on to clear input
+
         case XKB_KEY_u:
             if ((ksym == XKB_KEY_u && ctrl) ||
                 ksym == XKB_KEY_Escape) {
@@ -493,6 +495,14 @@ static void handle_key_press(xcb_key_press_event_t *event) {
             user_activity_event_sink->notify_activity_extending_power_state();
             //Ultimately this should answer calls or launch voice assistant, for now we will just say the time
             system("saytime -f %l%M");
+            break;
+
+        case XKB_KEY_XF86Sleep:
+            power_button_event_sink->notify_sleep_press();
+            break;
+
+        case XKB_KEY_XF86PowerDown:
+            power_button_event_sink->notify_off_press();
             break;
 
         case XKB_KEY_h:
@@ -542,7 +552,7 @@ static void handle_key_press(xcb_key_press_event_t *event) {
     /* store it in the password array as UTF-8 */
     memcpy(password + input_position, buffer, n - 1);
     input_position += n - 1;
-    DEBUG("current password = %.*s\n", input_position, password);
+    //DEBUG("current password = %.*s\n", input_position, password);
 
     if (unlock_indicator) {
         unlock_state = STATE_KEY_ACTIVE;
@@ -567,7 +577,14 @@ static void handle_key_release(xcb_key_release_event_t *event) {
 
     switch (ksym) {
         case XKB_KEY_Escape:
-            power_button_event_sink->notify_release();
+            power_button_event_sink->notify_on_release();
+            break;
+        case XKB_KEY_XF86Sleep:
+            power_button_event_sink->notify_sleep_release();
+            break;
+        case XKB_KEY_XF86PowerDown:
+            power_button_event_sink->notify_off_release();
+            break;
         default:
             break;
     }

@@ -27,8 +27,15 @@ namespace usc
     public:
         PowerButtonEventSink(std::string const& dbus_address);
 
-        void notify_press();
-        void notify_release();
+        void notify_on_press();
+        void notify_on_release();
+        void notify_sleep_press();
+        void notify_sleep_release();
+        void notify_off_press();
+        void notify_off_release();
+
+    private:
+        void send_signal_name(const char *name) const;
 
     private:
         DBusConnectionHandle dbus_connection;

@@ -22,6 +22,12 @@ namespace
     char const* const power_button_name = "org.thinkglobally.Gemian.PowerButton";
     char const* const power_button_path = "/org/thinkglobally/Gemian/PowerButton";
     char const* const power_button_iface = "org.thinkglobally.Gemian.PowerButton";
+    static const char *const on_press = "OnPress";
+    static const char *const on_release = "OnRelease";
+    static const char *const sleep_press = "SleepPress";
+    static const char *const sleep_release = "SleepRelease";
+    static const char *const off_press = "OffPress";
+    static const char *const off_release = "OffRelease";
 }
 
 usc::PowerButtonEventSink::PowerButtonEventSink(
@@ -31,26 +37,43 @@ usc::PowerButtonEventSink::PowerButtonEventSink(
     dbus_connection.request_name(power_button_name);
 }
 
-void usc::PowerButtonEventSink::notify_press()
-{
-    DBusMessageHandle signal{
+void usc::PowerButtonEventSink::send_signal_name(const char *name) const {
+    usc::DBusMessageHandle signal{
             dbus_message_new_signal(
                     power_button_path,
                     power_button_iface,
-                    "Press")};
+                    name)};
 
     dbus_connection_send(dbus_connection, signal, nullptr);
     dbus_connection_flush(dbus_connection);
 }
 
-void usc::PowerButtonEventSink::notify_release()
+void usc::PowerButtonEventSink::notify_on_press()
 {
-    DBusMessageHandle signal{
-            dbus_message_new_signal(
-                    power_button_path,
-                    power_button_iface,
-                    "Release")};
+    send_signal_name(on_press);
+}
 
-    dbus_connection_send(dbus_connection, signal, nullptr);
-    dbus_connection_flush(dbus_connection);
+void usc::PowerButtonEventSink::notify_on_release()
+{
+    send_signal_name(on_release);
+}
+
+void usc::PowerButtonEventSink::notify_sleep_press()
+{
+    send_signal_name(sleep_press);
+}
+
+void usc::PowerButtonEventSink::notify_sleep_release()
+{
+    send_signal_name(sleep_release);
+}
+
+void usc::PowerButtonEventSink::notify_off_press()
+{
+    send_signal_name(off_press);
+}
+
+void usc::PowerButtonEventSink::notify_off_release()
+{
+    send_signal_name(off_release);
 }
