@@ -492,9 +492,7 @@ static void handle_key_press(xcb_key_press_event_t *event) {
 
         case XKB_KEY_XF86Send:
             //Gemini PDA external silver button
-            user_activity_event_sink->notify_activity_extending_power_state();
-            //Ultimately this should answer calls or launch voice assistant, for now we will just say the time
-            system("saytime -f %l%M");
+            user_activity_event_sink->notify_activity_changing_power_state();
             break;
 
         case XKB_KEY_XF86Sleep:
@@ -579,12 +577,22 @@ static void handle_key_release(xcb_key_release_event_t *event) {
         case XKB_KEY_Escape:
             power_button_event_sink->notify_on_release();
             break;
+
         case XKB_KEY_XF86Sleep:
             power_button_event_sink->notify_sleep_release();
             break;
+
         case XKB_KEY_XF86PowerDown:
             power_button_event_sink->notify_off_release();
             break;
+
+        case XKB_KEY_XF86Send:
+            //Gemini PDA external silver button
+            user_activity_event_sink->notify_activity_extending_power_state();
+            //Ultimately this should answer calls or launch voice assistant, for now we will just say the time
+            system("saytime -f %l%M");
+            break;
+
         default:
             break;
     }
