@@ -22,7 +22,8 @@ add_executable(${PROJECT_NAME_LOWER}
         clock.cpp
         power_button_event_sink.cpp
         user_activity_event_sink.cpp
-        lock_active_event_sink.cpp)
+        lock_active_event_sink.cpp
+        silver_button_event_sink.cpp)
 
 target_link_libraries(${PROJECT_NAME_LOWER}
         ${LIBEV_LIBRARIES}
@@ -45,6 +46,7 @@ install(FILES
         org.thinkglobally.Gemian.PowerButton.xml
         org.thinkglobally.Gemian.UserActivity.xml
         org.thinkglobally.Gemian.Lock.xml
+        org.thinkglobally.Gemian.SilverButton.xml
         DESTINATION ${CMAKE_INSTALL_DATADIR}/dbus-1/interfaces
         )
 install(FILES default.png DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME_LOWER}/images)

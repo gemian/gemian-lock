@@ -52,6 +52,7 @@
 #include "clock.h"
 #include "user_activity_event_sink.h"
 #include "lock_active_event_sink.h"
+#include "silver_button_event_sink.h"
 
 #define TSTAMP_N_SECS(n) (n * 1.0)
 #define TSTAMP_N_MINS(n) (60 * TSTAMP_N_SECS(n))
@@ -107,6 +108,7 @@ std::string dbus_bus_address();
 std::shared_ptr<usc::PowerButtonEventSink> power_button_event_sink;
 std::shared_ptr<usc::UserActivityEventSink> user_activity_event_sink;
 std::shared_ptr<LockActiveEventSink> lock_active_event_sink;
+std::shared_ptr<SilverButtonEventSink> silver_button_event_sink;
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -493,6 +495,7 @@ static void handle_key_press(xcb_key_press_event_t *event) {
         case XKB_KEY_XF86Send:
             //Gemini PDA external silver button
             user_activity_event_sink->notify_activity_changing_power_state();
+            silver_button_event_sink->notify_on_press();
             break;
 
         case XKB_KEY_XF86Sleep:
@@ -587,10 +590,8 @@ static void handle_key_release(xcb_key_release_event_t *event) {
             break;
 
         case XKB_KEY_XF86Send:
-            //Gemini PDA external silver button
             user_activity_event_sink->notify_activity_extending_power_state();
-            //Ultimately this should answer calls or launch voice assistant, for now we will just say the time
-            system("saytime -f %l%M");
+            silver_button_event_sink->notify_on_release();
             break;
 
         default:
@@ -934,6 +935,7 @@ int main(int argc, char *argv[]) {
     power_button_event_sink = std::make_shared<usc::PowerButtonEventSink>(dbus_bus_address());
     user_activity_event_sink = std::make_shared<usc::UserActivityEventSink>(dbus_bus_address());
     lock_active_event_sink = std::make_shared<LockActiveEventSink>(dbus_bus_address());
+    silver_button_event_sink = std::make_shared<SilverButtonEventSink>(dbus_bus_address());
 
     struct passwd *pw;
     char *username;
