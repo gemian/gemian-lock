@@ -23,7 +23,8 @@ add_executable(${PROJECT_NAME_LOWER}
         power_button_event_sink.cpp
         user_activity_event_sink.cpp
         lock_active_event_sink.cpp
-        silver_button_event_sink.cpp)
+        silver_button_event_sink.cpp
+        call_control_event_sink.cpp)
 
 target_link_libraries(${PROJECT_NAME_LOWER}
         ${LIBEV_LIBRARIES}

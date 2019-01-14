@@ -53,6 +53,7 @@
 #include "user_activity_event_sink.h"
 #include "lock_active_event_sink.h"
 #include "silver_button_event_sink.h"
+#include "call_control_event_sink.h"
 
 #define TSTAMP_N_SECS(n) (n * 1.0)
 #define TSTAMP_N_MINS(n) (60 * TSTAMP_N_SECS(n))
@@ -104,11 +105,13 @@ bool tile = false;
 bool ignore_empty_password = false;
 bool skip_repeated_empty_password = false;
 
-std::string dbus_bus_address();
+std::string system_dbus_bus_address();
+std::string session_dbus_bus_address();
 std::shared_ptr<usc::PowerButtonEventSink> power_button_event_sink;
 std::shared_ptr<usc::UserActivityEventSink> user_activity_event_sink;
 std::shared_ptr<LockActiveEventSink> lock_active_event_sink;
 std::shared_ptr<SilverButtonEventSink> silver_button_event_sink;
+std::shared_ptr<CallControlEventSink> call_control_event_sink;
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -121,13 +124,23 @@ void u8_dec(const char *s, int *i) {
     (void)(isutf(s[--(*i)]) || isutf(s[--(*i)]) || isutf(s[--(*i)]) || --(*i));
 }
 
-std::string dbus_bus_address()
+std::string system_dbus_bus_address()
 {
     static char const* const default_bus_address{"unix:path=/var/run/dbus/system_bus_socket"};
 
     char const* bus = getenv("DBUS_SYSTEM_BUS_ADDRESS");
     if (!bus)
         bus = default_bus_address;
+
+    return std::string{bus};
+}
+
+std::string session_dbus_bus_address()
+{
+    char const* bus = getenv("DBUS_SESSION_BUS_ADDRESS");
+    if (!bus) {
+        fprintf(stderr, "[gemian-lock] could not get session bus\n");
+    }
 
     return std::string{bus};
 }
@@ -495,6 +508,7 @@ static void handle_key_press(xcb_key_press_event_t *event) {
         case XKB_KEY_XF86Send:
             //Gemini PDA external silver button
             user_activity_event_sink->notify_activity_changing_power_state();
+            call_control_event_sink->hang_up_and_accept_call();
             silver_button_event_sink->notify_on_press();
             break;
 
@@ -932,10 +946,11 @@ static void raise_loop(xcb_window_t window) {
 }
 
 int main(int argc, char *argv[]) {
-    power_button_event_sink = std::make_shared<usc::PowerButtonEventSink>(dbus_bus_address());
-    user_activity_event_sink = std::make_shared<usc::UserActivityEventSink>(dbus_bus_address());
-    lock_active_event_sink = std::make_shared<LockActiveEventSink>(dbus_bus_address());
-    silver_button_event_sink = std::make_shared<SilverButtonEventSink>(dbus_bus_address());
+    power_button_event_sink = std::make_shared<usc::PowerButtonEventSink>(system_dbus_bus_address());
+    user_activity_event_sink = std::make_shared<usc::UserActivityEventSink>(system_dbus_bus_address());
+    lock_active_event_sink = std::make_shared<LockActiveEventSink>(system_dbus_bus_address());
+    silver_button_event_sink = std::make_shared<SilverButtonEventSink>(system_dbus_bus_address());
+    call_control_event_sink = std::make_shared<CallControlEventSink>(session_dbus_bus_address());
 
     struct passwd *pw;
     char *username;
