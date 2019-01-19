@@ -54,6 +54,8 @@
 #include "lock_active_event_sink.h"
 #include "silver_button_event_sink.h"
 #include "call_control_event_sink.h"
+#include "torch_control_event_sink.h"
+#include "connman_control.h"
 
 #define TSTAMP_N_SECS(n) (n * 1.0)
 #define TSTAMP_N_MINS(n) (60 * TSTAMP_N_SECS(n))
@@ -112,6 +114,8 @@ std::shared_ptr<usc::UserActivityEventSink> user_activity_event_sink;
 std::shared_ptr<LockActiveEventSink> lock_active_event_sink;
 std::shared_ptr<SilverButtonEventSink> silver_button_event_sink;
 std::shared_ptr<CallControlEventSink> call_control_event_sink;
+std::shared_ptr<TorchControlEventSink> torch_control_event_sink;
+std::shared_ptr<ConnmanControl> connman_control;
 
 /* isutf, u8_dec © 2005 Jeff Bezanson, public domain */
 #define isutf(c) (((c)&0xC0) != 0x80)
@@ -481,6 +485,37 @@ static void handle_key_press(xcb_key_press_event_t *event) {
     }
 
     switch (ksym) {
+        case XKB_KEY_a:
+            if (ctrl) {
+                DEBUG("C-A pressed\n");
+                call_control_event_sink->hang_up_and_accept_call();
+            }
+            break;
+        case XKB_KEY_t:
+            if (ctrl) {
+                DEBUG("C-T pressed\n");
+                torch_control_event_sink->toggle_torch();
+            }
+            break;
+        case XKB_KEY_c:
+            if (ctrl) {
+                DEBUG("C-C pressed\n");
+                connman_control->toggle_celluar();
+            }
+            break;
+        case XKB_KEY_b:
+            if (ctrl) {
+                DEBUG("C-B pressed\n");
+                connman_control->toggle_bluetooth();
+            }
+            break;
+        case XKB_KEY_w:
+            if (ctrl) {
+                DEBUG("C-W pressed\n");
+                connman_control->toggle_wifi();
+            }
+            break;
+
         case XKB_KEY_Escape:
             power_button_event_sink->notify_on_press();
             //also pass on to clear input
@@ -951,6 +986,8 @@ int main(int argc, char *argv[]) {
     lock_active_event_sink = std::make_shared<LockActiveEventSink>(system_dbus_bus_address());
     silver_button_event_sink = std::make_shared<SilverButtonEventSink>(system_dbus_bus_address());
     call_control_event_sink = std::make_shared<CallControlEventSink>(session_dbus_bus_address());
+    torch_control_event_sink = std::make_shared<TorchControlEventSink>(system_dbus_bus_address());
+    connman_control = std::make_shared<ConnmanControl>(system_dbus_bus_address());
 
     struct passwd *pw;
     char *username;
@@ -1146,7 +1183,7 @@ int main(int argc, char *argv[]) {
         /* In case loading failed, we just pretend no -i was specified. */
         if (cairo_surface_status(img) != CAIRO_STATUS_SUCCESS) {
             fprintf(stderr, "Could not load image \"%s\": %s\n",
-                    image_path, cairo_status_to_string(cairo_surface_status(img)));
+                    image_path.c_str(), cairo_status_to_string(cairo_surface_status(img)));
             img = nullptr;
         }
     }

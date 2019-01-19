@@ -37,4 +37,3 @@ void CallControlEventSink::hang_up_and_accept_call() {
     dbus_connection_send(dbus_connection, signal, nullptr);
     dbus_connection_flush(dbus_connection);
 }
-;
