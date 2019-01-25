@@ -43,7 +43,7 @@ dbus_bool_t ConnmanControl::getPoweredForPath(const char *path) {
     int variantType;
     const char *replyString;
     dbus_bool_t replyValue;
-    dbus_bool_t ret = false;
+    dbus_bool_t power = false;
 
     DBusMessage *msg = dbus_message_new_method_call(
             dbus_connman_name,
@@ -52,6 +52,9 @@ dbus_bool_t ConnmanControl::getPoweredForPath(const char *path) {
             dbus_connman_message_get_properties);
 
     DBusMessage *reply = dbus_connection_send_with_reply_and_block(dbus_connection, msg, -1, nullptr);
+    if (reply == nullptr) {
+        return false;
+    }
 
     dbus_message_iter_init(reply, &messageItr);
     while ((messageType = dbus_message_iter_get_arg_type(&messageItr)) != DBUS_TYPE_INVALID) {
@@ -70,7 +73,7 @@ dbus_bool_t ConnmanControl::getPoweredForPath(const char *path) {
                                 if (variantType == DBUS_TYPE_BOOLEAN) {
                                     dbus_message_iter_get_basic(&variantItr, &replyValue);
                                     if (strcmp(replyString, dbus_connman_message_powered) == 0) {
-                                        ret = replyValue;
+                                        power = replyValue;
                                     }
                                 }
                                 dbus_message_iter_next(&variantItr);
@@ -85,7 +88,7 @@ dbus_bool_t ConnmanControl::getPoweredForPath(const char *path) {
         dbus_message_iter_next(&messageItr);
     }
 
-    return ret;
+    return power;
 }
 
 void ConnmanControl::setPoweredForPath(const char *path) {
