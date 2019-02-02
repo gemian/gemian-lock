@@ -489,30 +489,35 @@ static void handle_key_press(xcb_key_press_event_t *event) {
             if (ctrl) {
                 DEBUG("C-A pressed\n");
                 call_control_event_sink->hang_up_and_accept_call();
+                return;
             }
             break;
         case XKB_KEY_t:
             if (ctrl) {
                 DEBUG("C-T pressed\n");
                 torch_control_event_sink->toggle_torch();
+                return;
             }
             break;
         case XKB_KEY_c:
             if (ctrl) {
                 DEBUG("C-C pressed\n");
                 connman_control->toggle_celluar();
+                return
             }
             break;
         case XKB_KEY_b:
             if (ctrl) {
                 DEBUG("C-B pressed\n");
                 connman_control->toggle_bluetooth();
+                return;
             }
             break;
         case XKB_KEY_w:
             if (ctrl) {
                 DEBUG("C-W pressed\n");
                 connman_control->toggle_wifi();
+                return;
             }
             break;
 
